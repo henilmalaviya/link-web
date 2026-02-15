@@ -1,0 +1,13 @@
+[phases.setup]
+nixPkgs = ["bun"]
+
+[phases.install]
+cmds = ["bun install"]
+dependsOn = ["setup"]
+
+[phases.build]
+cmds = ["bun run build"]
+dependsOn = ["install"]
+
+[start]
+cmd = "bun run preview"
