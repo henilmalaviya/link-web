@@ -1,9 +1,10 @@
-import { mutation, MutationCtx, query, QueryCtx } from './_generated/server';
+import { mutation, query } from './_generated/server';
+import type { MutationCtx, QueryCtx } from './_generated/server';
 import { workspacesSchema } from './schema';
 import { generateRandomBytes, hashString } from './helpers';
 import { customMutation, customQuery } from 'convex-helpers/server/customFunctions';
 import { v } from 'convex/values';
-import { Doc, Id } from './_generated/dataModel';
+import type { Doc, Id } from './_generated/dataModel';
 
 // --- Authentication Helper ---
 const workspaceAuthArgs = {
@@ -79,6 +80,10 @@ export const create = mutation({
 export const get = protectedWorkspaceQuery({
 	args: {},
 	handler(ctx) {
-		return ctx.workspace;
+		return {
+			id: ctx.workspace._id,
+			name: ctx.workspace.name,
+			createdAt: new Date(ctx.workspace._creationTime).toISOString()
+		};
 	}
 });

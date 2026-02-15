@@ -8,6 +8,7 @@ export const workspacesSchema = {
 
 export const linksSchema = {
 	shortId: v.string(),
+	shortName: v.optional(v.string()),
 	secretHash: v.string(),
 
 	url: v.string(),
@@ -24,6 +25,8 @@ export const redirectsSchema = {
 
 export default defineSchema({
 	workspaces: defineTable(workspacesSchema).index('byName', ['name']),
-	links: defineTable(linksSchema).index('byShortId', ['shortId']),
-	redirects: defineTable(redirectsSchema)
+	links: defineTable(linksSchema)
+		.index('byShortId', ['shortId'])
+		.index('byWorkspaceShortName', ['workspaceId', 'shortName']),
+	redirects: defineTable(redirectsSchema).index('byLinkId', ['linkId'])
 });
