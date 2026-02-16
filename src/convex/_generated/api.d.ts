@@ -8,25 +8,13 @@
  * @module
  */
 
-import type * as crons from "../crons.js";
-import type * as helpers from "../helpers.js";
-import type * as links from "../links.js";
-import type * as titles from "../titles.js";
-import type * as workspaces from "../workspaces.js";
-
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 
-declare const fullApi: ApiFromModules<{
-  crons: typeof crons;
-  helpers: typeof helpers;
-  links: typeof links;
-  titles: typeof titles;
-  workspaces: typeof workspaces;
-}>;
+declare const fullApi: ApiFromModules<{}>;
 
 /**
  * A utility for referencing Convex functions in your app's public API.
