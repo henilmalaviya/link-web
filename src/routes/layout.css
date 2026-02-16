@@ -118,7 +118,7 @@
 		@apply border-border outline-ring/50;
 	}
 	body {
-		@apply bg-background font-nunito text-foreground;
+		@apply bg-background text-foreground;
 
 		display: flex;
 		flex-direction: column;
