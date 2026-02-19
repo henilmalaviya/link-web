@@ -3,11 +3,20 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import '@fontsource-variable/nunito-sans';
 	import { PUBLIC_CONVEX_URL } from '$env/static/public';
-	import { setupConvex } from 'convex-svelte';
+	import { setupConvex, useConvexClient } from 'convex-svelte';
+	import { onMount } from 'svelte';
+	import { user } from '$lib/state/user.svelte';
 
 	setupConvex(PUBLIC_CONVEX_URL);
 
 	let { children } = $props();
+
+	// Get convex client synchronously during component initialization
+	const convex = useConvexClient();
+
+	onMount(async () => {
+		await user.ensureUser(convex);
+	});
 </script>
 
 <svelte:head>
