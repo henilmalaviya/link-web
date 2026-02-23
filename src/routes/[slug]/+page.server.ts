@@ -1,17 +1,24 @@
-import { error, redirect } from '@sveltejs/kit';
-import { client, api } from '$lib/server/convex';
-import type { PageServerLoad } from './$types';
+import { redirect, error, type ServerLoad } from '@sveltejs/kit';
+import { api, client } from '$lib/server/convex';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const { slug } = params;
-
-	const link = await client.query(api.links.findByShortId, { shortId: slug });
-
-	if (!link) {
-		throw error(404, { message: 'Link not found' });
+export const load: ServerLoad = async ({ params }) => {
+	const shortId = params.slug;
+	if (!shortId) {
+		throw error(404, 'Not found');
 	}
 
-	client.mutation(api.redirects.logRedirect, { linkId: link._id }).catch(() => {});
+	const link = await client.query(api.links.findByShortId, { shortId });
+	if (!link) {
+		throw error(404, 'Not found');
+	}
+
+	void (async () => {
+		try {
+			await client.mutation(api.redirects.create, { shortId: link.shortId });
+		} catch {
+			// ignore
+		}
+	})();
 
 	throw redirect(302, link.url);
 };

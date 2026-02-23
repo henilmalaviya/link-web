@@ -5,6 +5,27 @@ import { customMutation, customQuery } from 'convex-helpers/server/customFunctio
 import { hash, randomBase62Id } from './crypto';
 import type { Doc, Id } from './_generated/dataModel';
 
+// Public query and mutation helpers
+export const publicQuery = customQuery(query, {
+	args: {},
+	input: async (ctx, data) => {
+		return {
+			args: {},
+			ctx: {}
+		};
+	}
+});
+
+export const publicMutation = customMutation(mutation, {
+	args: {},
+	input: async (ctx, data) => {
+		return {
+			args: {},
+			ctx: {}
+		};
+	}
+});
+
 /* -------------------------------------------------------------------------- */
 // HELPERS
 export async function authorizeUser(

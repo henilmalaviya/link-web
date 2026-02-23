@@ -38,10 +38,25 @@
 		WithElementRef<HTMLAnchorAttributes> & {
 			variant?: ButtonVariant;
 			size?: ButtonSize;
+			hotkey?: string | string[];
+			hotkeyEnabled?: boolean;
 		};
 </script>
 
 <script lang="ts">
+	const isEditableTarget = (target: EventTarget | null) => {
+		if (!(target instanceof Element)) return false;
+		const tagName = target.tagName.toLowerCase();
+		if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') return true;
+		if (target instanceof HTMLElement && target.isContentEditable) return true;
+		return Boolean(target.closest('[contenteditable="true"]'));
+	};
+
+	const normalizeHotkeys = (value: string | string[] | undefined) => {
+		if (!value) return [];
+		return (Array.isArray(value) ? value : [value]).map((key) => key.toLowerCase()).filter(Boolean);
+	};
+
 	let {
 		class: className,
 		variant = 'default',
@@ -50,9 +65,32 @@
 		href = undefined,
 		type = 'button',
 		disabled,
+		hotkey = undefined,
+		hotkeyEnabled = true,
 		children,
 		...restProps
 	}: ButtonProps = $props();
+
+	$effect(() => {
+		if (!hotkeyEnabled || disabled) return;
+		const keys = normalizeHotkeys(hotkey);
+		if (keys.length === 0) return;
+
+		const handler = (event: KeyboardEvent) => {
+			if (event.defaultPrevented) return;
+			if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+			if (isEditableTarget(event.target)) return;
+
+			const key = event.key.toLowerCase();
+			if (!keys.includes(key)) return;
+
+			event.preventDefault();
+			ref?.click();
+		};
+
+		window.addEventListener('keydown', handler);
+		return () => window.removeEventListener('keydown', handler);
+	});
 </script>
 
 {#if href}

@@ -6,6 +6,8 @@
 	import { setupConvex, useConvexClient } from 'convex-svelte';
 	import { onMount } from 'svelte';
 	import { user } from '$lib/state/user.svelte';
+	import Navbar from '$lib/components/Navbar.svelte';
+	import { Toaster } from '$lib/components/ui/sonner';
 
 	setupConvex(PUBLIC_CONVEX_URL);
 
@@ -24,5 +26,8 @@
 </svelte:head>
 
 <div class="mx-auto flex min-h-screen w-full max-w-4xl flex-col">
+	<Navbar />
 	{@render children()}
 </div>
+
+<Toaster />

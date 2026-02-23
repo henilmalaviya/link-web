@@ -8,20 +8,17 @@ export const userSchema = {
 export const linkSchema = {
 	url: v.string(),
 	shortId: v.string(),
-	createdAt: v.number(),
 
 	// REF
 	ownerId: v.id('users')
 };
 
 export const redirectSchema = {
-	// REF
-	linkId: v.id('links'),
-	redirectedAt: v.number()
+	shortId: v.string()
 };
 
 export default defineSchema({
 	users: defineTable(userSchema),
-	links: defineTable(linkSchema).index('byShortId', ['shortId']),
-	redirects: defineTable(redirectSchema).index('byLinkId', ['linkId'])
+	links: defineTable(linkSchema).index('byShortId', ['shortId']).index('byOwnerId', ['ownerId']),
+	redirects: defineTable(redirectSchema).index('byShortId', ['shortId'])
 });

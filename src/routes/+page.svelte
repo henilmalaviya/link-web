@@ -1,398 +1,83 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { useQuery, useConvexClient } from 'convex-svelte';
+	import { useQuery } from 'convex-svelte';
 	import { api } from '$convex/_generated/api';
-	import type { Id } from '$convex/_generated/dataModel';
-	import type { FunctionReference } from 'convex/server';
 	import { user } from '$lib/state/user.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import * as Drawer from '$lib/components/ui/drawer';
-	import LinkForm from '$lib/components/link-form.svelte';
-	import LinkItem from '$lib/components/link-item.svelte';
-	import LinkPreview from '$lib/components/link-preview.svelte';
-	import EmptyLinks from '$lib/components/empty-links.svelte';
-	import { Plus, Loader2, AlertCircle } from '@lucide/svelte';
+	import { getErrorMessage } from '$lib/utils.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Search, Filter, LayoutGrid, MoreHorizontal, BarChart3, Loader } from '@lucide/svelte';
+	import LinkCard from '$lib/components/LinkCard.svelte';
+	import type { Id } from '$convex/_generated/dataModel';
+	import { globalState } from '$lib/state/global.svelte';
 
-	interface StatPoint {
-		date: string;
-		count: number;
-	}
-
-	interface Link {
-		_id: string;
-		url: string;
-		shortId: string;
-		createdAt: number;
-		redirectCount: number;
-		stats: StatPoint[];
-	}
-
-	type DialogMode = 'create' | 'edit' | 'preview' | 'delete';
-
-	// Convex client
-	const convex = useConvexClient();
-
-	// Local state
-	let isDialogOpen = $state(false);
-	let dialogMode = $state<DialogMode>('create');
-	let selectedLink = $state<Link | null>(null);
-	let isCreating = $state(false);
-	let isUpdating = $state(false);
-	let isDeleting = $state(false);
-	let error = $state<string | null>(null);
-	let isMobile = $state(false);
-	let createdShortId = $state<string | null>(null);
-
-	// Cast API functions to work around potentially outdated generated types
-	// The actual functions exist in the convex backend
-	const linksApi = api.links as Record<string, unknown>;
-	const getAllQuery = linksApi.getAll as FunctionReference<'query'>;
-	const createMutation = linksApi.create as FunctionReference<'mutation'>;
-	const updateMutation = linksApi.update as FunctionReference<'mutation'>;
-	const deleteMutation = linksApi.deleteLink as FunctionReference<'mutation'>;
-
-	// Query links from Convex - return 'skip' string to conditionally skip
-	const linksQuery = useQuery(getAllQuery, () => {
-		if (!user.ensured || !user.exists || !user.data.current) {
-			return 'skip';
-		}
-		return {
-			userId: user.data.current.id as Id<'users'>,
-			token: user.data.current.token
-		};
-	});
-
-	// Derived state
-	const isLoading = $derived(!user.ensured || linksQuery.isLoading);
-	const links = $derived((linksQuery.data ?? []) as Link[]);
-
-	// Check for mobile viewport
-	onMount(() => {
-		const checkMobile = () => {
-			isMobile = window.innerWidth < 768;
-		};
-
-		checkMobile();
-		window.addEventListener('resize', checkMobile);
-		return () => window.removeEventListener('resize', checkMobile);
-	});
-
-	// Dialog/Drawer actions
-	function openCreateDialog() {
-		dialogMode = 'create';
-		selectedLink = null;
-		createdShortId = null;
-		error = null;
-		isDialogOpen = true;
-	}
-
-	function openEditDialog(link: Link) {
-		dialogMode = 'edit';
-		selectedLink = link;
-		createdShortId = null;
-		error = null;
-		isDialogOpen = true;
-	}
-
-	function openDeleteDialog(link: Link) {
-		dialogMode = 'delete';
-		selectedLink = link;
-		error = null;
-		isDialogOpen = true;
-	}
-
-	function closeDialog() {
-		isDialogOpen = false;
-		selectedLink = null;
-		createdShortId = null;
-		error = null;
-	}
-
-	// CRUD operations
-	async function handleCreate(url: string, shortId?: string) {
-		if (!user.data.current) return;
-
-		isCreating = true;
-		error = null;
-
-		try {
-			const result = (await convex.mutation(createMutation, {
-				url,
-				shortId,
-				userId: user.data.current.id as Id<'users'>,
-				token: user.data.current.token
-			})) as { shortId: string };
-
-			createdShortId = result.shortId;
-			dialogMode = 'preview';
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to create link';
-		} finally {
-			isCreating = false;
-		}
-	}
-
-	async function handleUpdate(url: string) {
-		if (!user.data.current || !selectedLink) return;
-
-		isUpdating = true;
-		error = null;
-
-		try {
-			await convex.mutation(updateMutation, {
-				linkId: selectedLink._id as Id<'links'>,
-				url,
-				userId: user.data.current.id as Id<'users'>,
-				token: user.data.current.token
-			});
-
-			closeDialog();
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to update link';
-		} finally {
-			isUpdating = false;
-		}
-	}
-
-	async function handleDelete() {
-		if (!user.data.current || !selectedLink) return;
-
-		isDeleting = true;
-		error = null;
-
-		try {
-			await convex.mutation(deleteMutation, {
-				linkId: selectedLink._id as Id<'links'>,
-				userId: user.data.current.id as Id<'users'>,
-				token: user.data.current.token
-			});
-
-			closeDialog();
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to delete link';
-		} finally {
-			isDeleting = false;
-		}
-	}
-
-	// Get base URL for short links
-	const baseUrl = $derived(
-		typeof window !== 'undefined'
-			? `${window.location.protocol}//${window.location.host}`
-			: 'https://lnk.to'
+	const linksResult = useQuery(api.links.listShortIdsByUser, () =>
+		globalState.hydrated && user.data.current
+			? {
+					userId: user.data.current.id as Id<'users'>,
+					token: user.data.current.token
+				}
+			: 'skip'
 	);
+	const links = $derived((linksResult.data ?? []).map((link: { shortId: string }) => link.shortId));
+	const loading = $derived(!globalState.hydrated || linksResult.isLoading);
+	const errorMessage = $derived(linksResult.error ? getErrorMessage(linksResult.error) : '');
 </script>
 
-<svelte:head>
-	<title>Link Shortener</title>
-</svelte:head>
-
-<div class="flex min-h-screen flex-col">
-	<!-- Header -->
-	<header class="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur">
-		<div class="flex h-16 items-center justify-between px-4">
-			<h1 class="text-xl font-semibold tracking-tight">Links</h1>
-			<Button onclick={openCreateDialog} class="gap-2">
-				<Plus class="size-4" />
-				<span class="hidden sm:inline">Create Link</span>
-				<span class="sm:hidden">Create</span>
+<div class="flex flex-col gap-6 px-3 py-4 sm:py-6">
+	<!-- Control Bar -->
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="flex items-center gap-2">
+			<Button variant="outline" size="sm" disabled>
+				<Filter class="mr-2 h-4 w-4" />
+				Filter
+			</Button>
+			<Button variant="outline" size="sm" disabled>
+				<LayoutGrid class="mr-2 h-4 w-4" />
+				Display
 			</Button>
 		</div>
-	</header>
+		<div class="flex items-center gap-2">
+			<div class="relative">
+				<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+				<Input
+					type="text"
+					placeholder="Search by short link or URL"
+					class="w-full pl-8 sm:w-64"
+					disabled
+				/>
+			</div>
+			<Button variant="ghost" size="sm" disabled>
+				<MoreHorizontal class="h-4 w-4" />
+			</Button>
+		</div>
+	</div>
 
-	<!-- Main content -->
-	<main class="flex-1 px-4 py-6">
-		{#if !user.ensured}
-			<!-- User initialization -->
-			<div class="flex flex-col items-center justify-center gap-4 py-20">
-				<Loader2 class="size-8 animate-spin text-muted-foreground" />
-				<p class="text-sm text-muted-foreground">Initializing...</p>
-			</div>
-		{:else if isLoading}
-			<!-- Loading state -->
-			<div class="flex flex-col gap-4">
-				{#each Array(5) as _, i (i)}
-					<div class="animate-pulse">
-						<div class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-							<div class="flex flex-1 flex-col gap-2">
-								<div class="h-5 w-24 rounded bg-muted"></div>
-								<div class="h-4 w-48 rounded bg-muted"></div>
-							</div>
-							<div class="flex items-center gap-4">
-								<div class="h-4 w-20 rounded bg-muted"></div>
-								<div class="flex gap-1">
-									<div class="h-8 w-8 rounded bg-muted"></div>
-									<div class="h-8 w-8 rounded bg-muted"></div>
-									<div class="h-8 w-8 rounded bg-muted"></div>
-								</div>
-							</div>
-						</div>
-					</div>
-				{/each}
-			</div>
-		{:else if linksQuery.error}
-			<!-- Error state -->
-			<div class="flex flex-col items-center justify-center gap-4 py-20">
-				<div
-					class="flex size-14 items-center justify-center rounded-full border border-destructive/50 bg-destructive/10"
-				>
-					<AlertCircle class="size-6 text-destructive" />
+	{#if loading}
+		<div class="flex items-center justify-center p-6">
+			<Loader class="h-5 w-5 animate-spin text-muted-foreground" />
+		</div>
+	{:else if errorMessage}
+		<div class="flex items-center justify-center rounded-lg border p-6 text-sm text-destructive">
+			{errorMessage}
+		</div>
+	{:else}
+		<!-- Links List -->
+		<div class="flex flex-col gap-3">
+			{#each links as shortId (shortId)}
+				<LinkCard {shortId} />
+			{/each}
+		</div>
+
+		{#if links.length === 0}
+			<div class="flex flex-col items-center justify-center py-12 text-center">
+				<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+					<BarChart3 class="h-8 w-8 text-muted-foreground" />
 				</div>
-				<div class="text-center">
-					<p class="font-medium">Failed to load links</p>
-					<p class="text-sm text-muted-foreground">{linksQuery.error.message}</p>
-				</div>
-			</div>
-		{:else if links.length === 0}
-			<!-- Empty state -->
-			<EmptyLinks onCreate={openCreateDialog} class="py-20" />
-		{:else}
-			<!-- Links list -->
-			<div class="border-t border-border">
-				{#each links as link (link._id)}
-					<LinkItem
-						{link}
-						stats={link.stats}
-						{baseUrl}
-						onEdit={openEditDialog}
-						onDelete={openDeleteDialog}
-					/>
-				{/each}
+				<h3 class="text-lg font-medium">No links yet</h3>
+				<p class="mt-2 max-w-sm text-muted-foreground">
+					Create your first link to get started with link tracking and analytics.
+				</p>
 			</div>
 		{/if}
-	</main>
+	{/if}
 </div>
-
-<!-- Desktop Dialog -->
-{#if !isMobile}
-	<Dialog.Root bind:open={isDialogOpen}>
-		<Dialog.Content class="max-w-md">
-			<Dialog.Header>
-				<Dialog.Title>
-					{#if dialogMode === 'create'}
-						Create Short Link
-					{:else if dialogMode === 'edit'}
-						Edit Link
-					{:else if dialogMode === 'preview'}
-						Link Created!
-					{:else if dialogMode === 'delete'}
-						Delete Link
-					{/if}
-				</Dialog.Title>
-			</Dialog.Header>
-
-			{#if error}
-				<div class="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3">
-					<p class="text-sm text-destructive">{error}</p>
-				</div>
-			{/if}
-
-			{#if dialogMode === 'create'}
-				<LinkForm onSubmit={handleCreate} isEditing={false} />
-			{:else if dialogMode === 'edit' && selectedLink}
-				<LinkForm
-					onSubmit={(url) => handleUpdate(url)}
-					initialUrl={selectedLink.url}
-					initialShortId={selectedLink.shortId}
-					isEditing={true}
-				/>
-			{:else if dialogMode === 'preview' && createdShortId}
-				<div class="flex flex-col gap-4">
-					<LinkPreview shortId={createdShortId} {baseUrl} />
-					<Button variant="outline" onclick={closeDialog}>Done</Button>
-				</div>
-			{:else if dialogMode === 'delete' && selectedLink}
-				<div class="flex flex-col gap-4">
-					<p class="text-sm text-muted-foreground">
-						Are you sure you want to delete the link
-						<strong class="text-foreground">{selectedLink.shortId}</strong>? This action cannot be
-						undone.
-					</p>
-					<div class="flex justify-end gap-2">
-						<Button variant="outline" onclick={closeDialog} disabled={isDeleting}>Cancel</Button>
-						<Button variant="destructive" onclick={handleDelete} disabled={isDeleting}>
-							{#if isDeleting}
-								<Loader2 class="size-4 animate-spin" />
-								Deleting...
-							{:else}
-								Delete
-							{/if}
-						</Button>
-					</div>
-				</div>
-			{/if}
-		</Dialog.Content>
-	</Dialog.Root>
-{/if}
-
-<!-- Mobile Drawer -->
-{#if isMobile}
-	<Drawer.Root bind:open={isDialogOpen}>
-		<Drawer.Content>
-			<Drawer.Header>
-				<Drawer.Title>
-					{#if dialogMode === 'create'}
-						Create Short Link
-					{:else if dialogMode === 'edit'}
-						Edit Link
-					{:else if dialogMode === 'preview'}
-						Link Created!
-					{:else if dialogMode === 'delete'}
-						Delete Link
-					{/if}
-				</Drawer.Title>
-			</Drawer.Header>
-
-			<div class="px-4 pb-6">
-				{#if error}
-					<div class="mb-4 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3">
-						<p class="text-sm text-destructive">{error}</p>
-					</div>
-				{/if}
-
-				{#if dialogMode === 'create'}
-					<LinkForm onSubmit={handleCreate} isEditing={false} />
-				{:else if dialogMode === 'edit' && selectedLink}
-					<LinkForm
-						onSubmit={(url) => handleUpdate(url)}
-						initialUrl={selectedLink.url}
-						initialShortId={selectedLink.shortId}
-						isEditing={true}
-					/>
-				{:else if dialogMode === 'preview' && createdShortId}
-					<div class="flex flex-col gap-4">
-						<LinkPreview shortId={createdShortId} {baseUrl} />
-						<Button variant="outline" onclick={closeDialog}>Done</Button>
-					</div>
-				{:else if dialogMode === 'delete' && selectedLink}
-					<div class="flex flex-col gap-4">
-						<p class="text-sm text-muted-foreground">
-							Are you sure you want to delete the link
-							<strong class="text-foreground">{selectedLink.shortId}</strong>? This action cannot be
-							undone.
-						</p>
-						<div class="flex gap-2">
-							<Button variant="outline" onclick={closeDialog} disabled={isDeleting} class="flex-1">
-								Cancel
-							</Button>
-							<Button
-								variant="destructive"
-								onclick={handleDelete}
-								disabled={isDeleting}
-								class="flex-1"
-							>
-								{#if isDeleting}
-									<Loader2 class="size-4 animate-spin" />
-									Deleting...
-								{:else}
-									Delete
-								{/if}
-							</Button>
-						</div>
-					</div>
-				{/if}
-			</div>
-		</Drawer.Content>
-	</Drawer.Root>
-{/if}

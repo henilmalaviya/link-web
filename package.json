@@ -23,11 +23,14 @@
 		"@tailwindcss/vite": "^4.1.18",
 		"bits-ui": "^2.14.4",
 		"clsx": "^2.1.1",
+		"mode-watcher": "^1.1.0",
 		"prettier": "^3.8.1",
 		"prettier-plugin-svelte": "^3.4.1",
 		"prettier-plugin-tailwindcss": "^0.7.2",
+		"shadcn-svelte": "^1.1.1",
 		"svelte": "^5.49.2",
 		"svelte-check": "^4.3.6",
+		"svelte-sonner": "^1.0.7",
 		"tailwind-merge": "^3.4.0",
 		"tailwind-variants": "^3.2.2",
 		"tailwindcss": "^4.1.18",
@@ -41,6 +44,7 @@
 		"convex": "^1.31.7",
 		"convex-helpers": "^0.1.112",
 		"convex-svelte": "^0.0.12",
+		"moment": "^2.30.1",
 		"runed": "^0.37.1"
 	}
 }

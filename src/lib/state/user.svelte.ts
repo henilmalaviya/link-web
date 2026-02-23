@@ -8,7 +8,7 @@ export type UserState = {
 	token: string;
 };
 
-class User {
+export class User {
 	data = new PersistedState<UserState | null>('user', null);
 	exists = $derived(this.data.current !== null);
 	creating = $state(false);
