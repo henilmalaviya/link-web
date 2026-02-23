@@ -1,8 +1,9 @@
 import { v } from 'convex/values';
-import { mutation, MutationCtx, query, QueryCtx } from './_generated/server';
+import { mutation, query } from './_generated/server';
+import type { MutationCtx, QueryCtx } from './_generated/server';
 import { customMutation, customQuery } from 'convex-helpers/server/customFunctions';
 import { hash, randomBase62Id } from './crypto';
-import { Doc, Id } from './_generated/dataModel';
+import type { Doc, Id } from './_generated/dataModel';
 
 /* -------------------------------------------------------------------------- */
 // HELPERS
