@@ -6,17 +6,9 @@
 	import { cn, getErrorMessage } from '$lib/utils.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import {
-		Copy,
-		ExternalLink,
-		CornerDownRight,
-		MoreHorizontal,
-		Sparkles,
-		MousePointerClick
-	} from '@lucide/svelte';
+	import { Copy, ExternalLink, CornerDownRight, MoreHorizontal, Sparkles } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { copyToClipboard } from '$lib/utils/clipboard';
-	import type { Id } from '$convex/_generated/dataModel';
 	import moment from 'moment';
 	import { globalState } from '$lib/state/global.svelte';
 
@@ -75,7 +67,7 @@
 	const linkResult = useQuery(api.links.getByShortId, () =>
 		globalState.hydrated && user.data.current
 			? {
-					userId: user.data.current.id as Id<'users'>,
+					userId: user.data.current.id,
 					token: user.data.current.token,
 					shortId
 				}
@@ -85,7 +77,7 @@
 	const clicksResult = useQuery(api.redirects.countByShortId, () =>
 		globalState.hydrated && user.data.current && shortId
 			? {
-					userId: user.data.current.id as Id<'users'>,
+					userId: user.data.current.id,
 					token: user.data.current.token,
 					shortId
 				}
@@ -174,7 +166,7 @@
 			<div class="flex items-center justify-end gap-2 sm:gap-5">
 				<div
 					class={cn(
-						'flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600',
+						'flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600 tabular-nums',
 						clicksResult.data && clicksResult.data > 0 && 'text-sky-700'
 					)}
 				>

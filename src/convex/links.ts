@@ -91,17 +91,6 @@ export const generateShortId = protectedUserMutation({
 	}
 });
 
-export const listByUser = protectedUserQuery({
-	args: {},
-	handler: async (ctx) => {
-		return ctx.db
-			.query('links')
-			.withIndex('byOwnerId', (q) => q.eq('ownerId', ctx.user._id))
-			.order('desc')
-			.collect();
-	}
-});
-
 export const listShortIdsByUser = protectedUserQuery({
 	args: {},
 	handler: async (ctx) => {

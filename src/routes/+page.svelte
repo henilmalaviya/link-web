@@ -7,13 +7,12 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Search, Filter, LayoutGrid, MoreHorizontal, BarChart3, Loader } from '@lucide/svelte';
 	import LinkCard from '$lib/components/LinkCard.svelte';
-	import type { Id } from '$convex/_generated/dataModel';
 	import { globalState } from '$lib/state/global.svelte';
 
 	const linksResult = useQuery(api.links.listShortIdsByUser, () =>
 		globalState.hydrated && user.data.current
 			? {
-					userId: user.data.current.id as Id<'users'>,
+					userId: user.data.current.id,
 					token: user.data.current.token
 				}
 			: 'skip'
