@@ -1,6 +1,11 @@
 import { ConvexError, v } from 'convex/values';
 import { linkSchema } from './schema';
-import { protectedUserMutation, protectedUserQuery, publicQuery } from './users';
+import {
+	protectedUserMutation,
+	protectedUserQuery,
+	protectedShortIdQuery,
+	publicQuery
+} from './users';
 import { randomBase62Id } from './crypto';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
@@ -104,20 +109,9 @@ export const listShortIdsByUser = protectedUserQuery({
 	}
 });
 
-export const getByShortId = protectedUserQuery({
-	args: {
-		shortId: linkSchema.shortId
-	},
-	handler: async (ctx, { shortId }) => {
-		const link = await ctx.db
-			.query('links')
-			.withIndex('byShortId', (q) => q.eq('shortId', shortId))
-			.first();
-
-		if (!link || link.ownerId !== ctx.user._id) {
-			throw new ConvexError('Link not found');
-		}
-
-		return link;
+export const getByShortId = protectedShortIdQuery({
+	args: {},
+	handler: async (ctx) => {
+		return ctx.link;
 	}
 });

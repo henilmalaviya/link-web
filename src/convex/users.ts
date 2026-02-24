@@ -1,4 +1,4 @@
-import { v } from 'convex/values';
+import { ConvexError, v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { customMutation, customQuery } from 'convex-helpers/server/customFunctions';
@@ -82,6 +82,70 @@ export const protectedUserMutation = customMutation(mutation, {
 			},
 			ctx: {
 				user
+			}
+		};
+	}
+});
+
+export const protectedShortIdQuery = customQuery(query, {
+	args: {
+		userId: v.id('users'),
+		token: v.string(),
+		shortId: v.string()
+	},
+	input: async (ctx, data) => {
+		const user = await authorizeUser(ctx, data);
+		const link = await ctx.db
+			.query('links')
+			.withIndex('byShortId', (q) => q.eq('shortId', data.shortId))
+			.first();
+
+		if (!link) {
+			throw new ConvexError({ code: 'LINK_NOT_FOUND', message: 'Link not found' });
+		}
+		if (link.ownerId !== user._id) {
+			throw new ConvexError({ code: 'FORBIDDEN', message: 'Forbidden' });
+		}
+
+		return {
+			args: {
+				shortId: data.shortId
+			},
+			ctx: {
+				user,
+				link
+			}
+		};
+	}
+});
+
+export const protectedShortIdMutation = customMutation(mutation, {
+	args: {
+		userId: v.id('users'),
+		token: v.string(),
+		shortId: v.string()
+	},
+	input: async (ctx, data) => {
+		const user = await authorizeUser(ctx, data);
+		const link = await ctx.db
+			.query('links')
+			.withIndex('byShortId', (q) => q.eq('shortId', data.shortId))
+			.first();
+
+		if (!link) {
+			throw new ConvexError({ code: 'LINK_NOT_FOUND', message: 'Link not found' });
+		}
+		if (link.ownerId !== user._id) {
+			throw new ConvexError({ code: 'FORBIDDEN', message: 'Forbidden' });
+		}
+
+		return {
+			args: {
+				shortId: data.shortId
+			},
+			ctx: {
+				user,
+				link
 			}
 		};
 	}

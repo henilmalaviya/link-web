@@ -11,6 +11,7 @@
 	import { copyToClipboard } from '$lib/utils/clipboard';
 	import moment from 'moment';
 	import { globalState } from '$lib/state/global.svelte';
+	import type { Id } from '$convex/_generated/dataModel';
 
 	let { shortId } = $props<{ shortId: string }>();
 
@@ -67,7 +68,7 @@
 	const linkResult = useQuery(api.links.getByShortId, () =>
 		globalState.hydrated && user.data.current
 			? {
-					userId: user.data.current.id,
+					userId: user.data.current.id as Id<'users'>,
 					token: user.data.current.token,
 					shortId
 				}
@@ -77,7 +78,7 @@
 	const clicksResult = useQuery(api.redirects.countByShortId, () =>
 		globalState.hydrated && user.data.current && shortId
 			? {
-					userId: user.data.current.id,
+					userId: user.data.current.id as Id<'users'>,
 					token: user.data.current.token,
 					shortId
 				}
