@@ -97,18 +97,18 @@
 
 {#if !globalState.hydrated || linkResult.isLoading}
 	<div class="rounded-xl border bg-card">
-		<div class="flex items-center gap-5 px-4 py-5 text-sm sm:gap-8 md:gap-12">
+		<div class="flex items-center gap-3 px-3 py-3 text-sm sm:gap-5 sm:px-4 sm:py-5 md:gap-12">
 			<div class="min-w-0 grow">
-				<div class="flex h-8 items-center gap-3">
-					<Skeleton class="h-9 w-9 rounded-full" />
+				<div class="flex items-center gap-3 sm:h-8">
+					<Skeleton class="h-9 w-9 shrink-0 rounded-full" />
 					<div class="min-w-0">
-						<Skeleton class="h-4 w-36" />
-						<Skeleton class="mt-2 h-3 w-64" />
+						<Skeleton class="h-4 w-28 sm:w-36" />
+						<Skeleton class="mt-2 h-3 w-40 sm:w-64" />
 					</div>
 				</div>
 			</div>
 			<div class="flex items-center justify-end gap-2">
-				<Skeleton class="h-7 w-20 rounded-md" />
+				<Skeleton class="h-7 w-14 rounded-md sm:w-20" />
 				<Skeleton class="h-7 w-7 rounded-md" />
 			</div>
 		</div>
@@ -128,10 +128,12 @@
 {:else if linkResult.data}
 	{@const link = linkResult.data}
 	<div class="rounded-xl border bg-card">
-		<div class="flex items-center gap-5 px-4 py-5 text-sm sm:gap-8 md:gap-12">
+		<div class="flex items-center gap-3 px-3 py-3 text-sm sm:gap-5 sm:px-4 sm:py-5 md:gap-12">
 			<div class="min-w-0 grow">
-				<div class="flex h-8 items-center gap-3">
-					<div class="flex h-9 w-9 items-center justify-center rounded-full border bg-background">
+				<div class="flex items-center gap-3 sm:h-8">
+					<div
+						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-background"
+					>
 						<img src={getFavicon(link.url)} alt="" class="h-5 w-5" />
 					</div>
 					<div class="min-w-0 overflow-hidden">
@@ -149,7 +151,7 @@
 							<Button
 								variant="ghost"
 								size="icon-sm"
-								class="h-5 w-5 rounded-full p-0"
+								class="h-5 w-5 shrink-0 rounded-full p-0"
 								onclick={copyShortLink}
 							>
 								<Copy class="h-3 w-3" />
@@ -161,12 +163,12 @@
 								href={link.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								class="truncate text-neutral-500 decoration-dotted transition-colors hover:text-neutral-700 hover:underline hover:underline-offset-2"
+								class="min-w-0 truncate text-neutral-500 decoration-dotted transition-colors hover:text-neutral-700 hover:underline hover:underline-offset-2"
 							>
 								{getHostname(link.url)}
 							</a>
 							<span class="text-neutral-400">•</span>
-							<span class="text-neutral-400">
+							<span class="shrink-0 text-neutral-400">
 								{formatDate(link._creationTime)}
 							</span>
 						</div>
@@ -182,7 +184,7 @@
 					)}
 				>
 					<Sparkles class="h-3.5 w-3.5" />
-					<span>{clicksResult.data?.totalClicks ?? 0} clicks</span>
+					<span class="hidden sm:inline">{clicksResult.data?.totalClicks ?? 0} clicks</span>
 				</a>
 				<Button variant="ghost" size="sm" class="h-7 w-7 p-0">
 					<MoreHorizontal class="h-4 w-4" />

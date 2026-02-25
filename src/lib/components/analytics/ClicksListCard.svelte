@@ -51,19 +51,21 @@
 </script>
 
 {#snippet GroupSelector()}
-	<ButtonGroup.Root class="hidden sm:flex">
-		{#each groups as group}
-			<Button
-				onclick={() => (selectedGroup = group)}
-				variant="outline"
-				size="lg"
-				class="data-[state=off]:border-b-none rounded-none capitalize data-[state=on]:border-b data-[state=on]:border-b-primary"
-				data-state={selectedGroup === group ? 'on' : 'off'}
-			>
-				{group}
-			</Button>
-		{/each}
-	</ButtonGroup.Root>
+	<div class="flex w-full overflow-x-auto sm:flex-nowrap">
+		<ButtonGroup.Root class="flex w-full sm:w-auto">
+			{#each groups as group}
+				<Button
+					onclick={() => (selectedGroup = group)}
+					variant="outline"
+					size="lg"
+					class="data-[state=off]:border-b-none flex-1 shrink-0 rounded-none whitespace-nowrap capitalize data-[state=on]:border-b data-[state=on]:border-b-primary sm:flex-initial"
+					data-state={selectedGroup === group ? 'on' : 'off'}
+				>
+					{group}
+				</Button>
+			{/each}
+		</ButtonGroup.Root>
+	</div>
 {/snippet}
 
 {#snippet CountryIcon({ country }: { country: string })}
@@ -75,10 +77,10 @@
 	onmouseleave={() => (isCardHovered = false)}
 	class="min-h-96 w-full pt-0 shadow-none"
 >
-	<Card.Header class="gap-0 border-b p-0!">
+	<Card.Header class="gap-0 overflow-hidden border-b p-0!">
 		{@render GroupSelector()}
 	</Card.Header>
-	<Card.Content>
+	<Card.Content class="p-3 sm:p-4">
 		{#if data.isLoading}
 			<div class="flex flex-col gap-2">
 				<Skeleton class="h-8 w-full" />

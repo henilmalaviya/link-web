@@ -26,7 +26,7 @@
 <div class="flex flex-col gap-6 px-3 py-4 sm:py-6">
 	<!-- Control Bar -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="flex items-center gap-2">
+		<div class="hidden items-center gap-2 sm:flex">
 			<Button variant="outline" size="sm" disabled>
 				<Filter class="mr-2 h-4 w-4" />
 				Filter
@@ -37,7 +37,7 @@
 			</Button>
 		</div>
 		<div class="flex items-center gap-2">
-			<div class="relative">
+			<div class="relative grow">
 				<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
 				<Input
 					type="text"
@@ -46,7 +46,7 @@
 					disabled
 				/>
 			</div>
-			<Button variant="ghost" size="sm" disabled>
+			<Button variant="ghost" size="sm" class="hidden sm:flex" disabled>
 				<MoreHorizontal class="h-4 w-4" />
 			</Button>
 		</div>

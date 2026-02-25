@@ -37,7 +37,6 @@ export class User {
 	}
 
 	private async isValidUser(convex: ConvexClient): Promise<boolean> {
-		console.log('Validating user...');
 		const user = this.data.current;
 		if (!user) return false;
 		try {
@@ -45,8 +44,6 @@ export class User {
 				userId: user.id as Id<'users'>,
 				token: user.token
 			});
-
-			console.log('User is valid');
 
 			return true;
 		} catch (e) {
@@ -56,11 +53,9 @@ export class User {
 	}
 
 	public async createUser(convex: ConvexClient) {
-		console.log('Creating user...');
 		this.creating = true;
 		const { id, token } = await convex.mutation(api.users.create, {});
 		this.data.current = { id, token };
-		console.log('User created with id', id);
 		this.creating = false;
 	}
 }

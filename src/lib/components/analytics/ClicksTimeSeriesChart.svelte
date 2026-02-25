@@ -49,28 +49,32 @@
 
 		const { tickUnit, tickStep } = meta;
 
+		// Increase tick step on mobile to reduce clutter
+		const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+		const adjustedStep = isMobile ? Math.max(tickStep * 2, 2) : tickStep;
+
 		switch (tickUnit) {
 			case 'minute':
-				return timeMinute.every(tickStep);
+				return timeMinute.every(adjustedStep);
 			case 'hour':
-				return timeHour.every(tickStep);
+				return timeHour.every(adjustedStep);
 			case 'day':
-				return timeDay.every(tickStep);
+				return timeDay.every(adjustedStep);
 			case 'week':
-				return timeWeek.every(tickStep);
+				return timeWeek.every(adjustedStep);
 			case 'month':
-				return timeMonth.every(tickStep);
+				return timeMonth.every(adjustedStep);
 			case 'year':
-				return timeYear.every(tickStep);
+				return timeYear.every(adjustedStep);
 			default:
-				return timeDay.every(1);
+				return timeDay.every(adjustedStep);
 		}
 	});
 
 	$inspect({ buckets });
 </script>
 
-<div class="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:p-6">
+<div class="flex flex-col gap-3 rounded-xl border bg-card p-3 sm:p-6">
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		{#if loading}
 			<Skeleton class="h-5 w-32" />
@@ -85,7 +89,7 @@
 			<Skeleton class="h-64 w-full" />
 		{:else}
 			<ChartContainer
-				class="aspect-auto h-64 w-full"
+				class="aspect-auto h-48 w-full sm:h-64"
 				config={{
 					clicks: {
 						label: 'Clicks',

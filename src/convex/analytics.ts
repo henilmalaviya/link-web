@@ -94,8 +94,6 @@ export const timeSeriesByShortId = protectedShortIdQuery({
 			CHART_GRANULARITY_TIERS.find((tier) => diffHours <= tier.maxHours) ??
 			CHART_GRANULARITY_TIERS[CHART_GRANULARITY_TIERS.length - 1]; // Fallback to largest
 
-		console.log({ diffHours, config, loopStart, loopEnd, redirects });
-
 		const { unit, tickUnit, tickStep, unitStep } = config;
 
 		const timeSeriesBuckets = createTimeSeriesBuckets({

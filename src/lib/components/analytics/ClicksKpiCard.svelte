@@ -32,7 +32,7 @@
 	const totalClicks = $derived(totalClicksResult.data?.totalClicks ?? 0);
 </script>
 
-<div class="rounded-xl border bg-card p-4 sm:p-5">
+<div class="rounded-xl border bg-card p-3 sm:p-5">
 	{#if loading}
 		<Skeleton class="h-4 w-20" />
 		<Skeleton class="mt-3 h-8 w-28" />
