@@ -10,7 +10,6 @@
 	import { user } from '$lib/state/user.svelte';
 	import ChartContainer from '$lib/components/ui/chart/chart-container.svelte';
 	import ChartTooltip from '$lib/components/ui/chart/chart-tooltip.svelte';
-	import { curveMonotoneX } from 'd3-shape';
 
 	const shortId = $derived(page.url.searchParams.get('shortId') ?? '');
 	let { startTime, endTime }: { startTime?: number; endTime?: number } = $props();

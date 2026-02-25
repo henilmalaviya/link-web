@@ -9,6 +9,12 @@
 
 	const ranges = [
 		{
+			key: '1h',
+			label: '1 Hour',
+			start: () => DateTime.now().minus({ hours: 1 }).startOf('minute').toMillis(),
+			end: () => undefined
+		},
+		{
 			key: '24h',
 			label: '24 Hours',
 			start: () => DateTime.now().minus({ hours: 24 }).startOf('hour').toMillis(),
@@ -34,7 +40,7 @@
 		}
 	];
 
-	let rangeKey = $state<string>('24h');
+	let rangeKey = $state<string>('1h');
 	const range = $derived(ranges.find((r) => r.key === rangeKey));
 	const rangeLabel = $derived(range?.label ?? 'Select range');
 

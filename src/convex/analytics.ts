@@ -75,15 +75,15 @@ export const timeSeriesByShortId = protectedShortIdQuery({
 		timezone: v.optional(v.string())
 	},
 	handler: async (ctx, args) => {
-		const { shortId, start = ctx.link._creationTime, end, timezone = 'UTC' } = args;
+		const { shortId, start, end, timezone = 'UTC' } = args;
 
 		const redirects = await fetchRedirects(ctx, {
 			shortId,
-			start,
+			start: start ?? ctx.link._creationTime,
 			end
 		});
 
-		const loopStart = redirects[0]._creationTime ?? start;
+		const loopStart = start ?? redirects[0]._creationTime;
 		const loopEnd = end ?? Date.now();
 
 		const diff = Duration.fromMillis(loopEnd - loopStart);
