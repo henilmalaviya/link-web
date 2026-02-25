@@ -2,12 +2,15 @@
 	import { page } from '$app/state';
 	import { AreaChart } from 'layerchart';
 	import { useQuery } from 'convex-svelte';
-	import { timeDay, timeHour } from 'd3-time';
+	import { timeDay, timeHour, timeMinute, timeMonth, timeWeek, timeYear } from 'd3-time';
 	import { api } from '$convex/_generated/api';
 	import type { Id } from '$convex/_generated/dataModel';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { globalState } from '$lib/state/global.svelte';
 	import { user } from '$lib/state/user.svelte';
+	import ChartContainer from '$lib/components/ui/chart/chart-container.svelte';
+	import ChartTooltip from '$lib/components/ui/chart/chart-tooltip.svelte';
+	import { curveMonotoneX } from 'd3-shape';
 
 	const shortId = $derived(page.url.searchParams.get('shortId') ?? '');
 	let { startTime, endTime }: { startTime?: number; endTime?: number } = $props();
@@ -31,6 +34,39 @@
 	);
 
 	const loading = $derived(!globalState.hydrated || timeSeriesResult.isLoading);
+	const buckets = $derived(timeSeriesResult.data?.buckets ?? []);
+
+	const data = $derived(
+		buckets.map((bucket) => ({
+			date: new Date(bucket.bucketStart),
+			value: bucket.value
+		}))
+	);
+
+	const tickInterval = $derived.by(() => {
+		// Default to daily if data hasn't loaded yet
+		const meta = timeSeriesResult.data?.meta;
+		if (!meta) return timeDay.every(1);
+
+		const { tickUnit, tickStep } = meta;
+
+		switch (tickUnit) {
+			case 'minute':
+				return timeMinute.every(tickStep);
+			case 'hour':
+				return timeHour.every(tickStep);
+			case 'day':
+				return timeDay.every(tickStep);
+			case 'week':
+				return timeWeek.every(tickStep);
+			case 'month':
+				return timeMonth.every(tickStep);
+			case 'year':
+				return timeYear.every(tickStep);
+			default:
+				return timeDay.every(1);
+		}
+	});
 
 	$inspect({ timeSeriesResult });
 </script>
@@ -49,7 +85,7 @@
 		{#if loading}
 			<Skeleton class="h-64 w-full" />
 		{:else}
-			<!-- <ChartContainer
+			<ChartContainer
 				class="aspect-auto h-64 w-full"
 				config={{
 					clicks: {
@@ -59,14 +95,14 @@
 				}}
 			>
 				<AreaChart
-					data={timeSeriesWithDates}
-					x={(d: ClickPointDate) => d.date}
-					y={(d: ClickPoint) => d.count}
+					{data}
+					x={(d) => d.date}
+					y={(d) => d.value}
 					series={[
 						{
 							key: 'clicks',
 							label: 'Clicks',
-							value: (d: ClickPointDate) => d.count,
+							value: (d) => d.value,
 							color: 'var(--color-clicks)'
 						}
 					]}
@@ -75,21 +111,24 @@
 					points={false}
 					props={{
 						area: { fillOpacity: 0.18, strokeWidth: 2 },
-						xAxis: { format: formatLocalTick, ticks: { interval: tickInterval } },
+						xAxis: { ticks: { interval: tickInterval } },
 						yAxis: { format: (value: number) => Number(value).toLocaleString() }
 					}}
 				>
 					{#snippet tooltip()}
 						<ChartTooltip
-							labelFormatter={(_value, payload) => {
-								const point = payload?.[0]?.payload as ClickPointDate | undefined;
-								const value = point?.date ?? point?.timestamp;
-								return formatLocalLabel(value ?? 0);
+							labelFormatter={(value, payload) => {
+								return (value as Date).toLocaleString(undefined, {
+									month: 'short',
+									day: 'numeric',
+									hour: 'numeric',
+									minute: 'numeric'
+								});
 							}}
 						/>
 					{/snippet}
 				</AreaChart>
-			</ChartContainer> -->
+			</ChartContainer>
 		{/if}
 	</div>
 </div>
