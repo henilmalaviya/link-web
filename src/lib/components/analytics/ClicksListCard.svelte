@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { api } from '$convex/_generated/api';
-	import type { Id } from '$convex/_generated/dataModel';
 	import { globalState } from '$lib/state/global.svelte';
 	import { user } from '$lib/state/user.svelte';
 	import { useQuery } from 'convex-svelte';
@@ -34,12 +33,11 @@
 	const data = useQuery(
 		api.analytics.aggregateClicksByShortId,
 		() => {
-			if (!globalState.hydrated || !user.data.current) {
+			if (!globalState.hydrated || !user.authArgs) {
 				return 'skip';
 			}
 			return {
-				userId: user.data.current.id as Id<'users'>,
-				token: user.data.current.token,
+				...user.authArgs,
 				shortId,
 				start: startTime,
 				end: endTime,

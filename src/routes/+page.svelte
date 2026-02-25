@@ -19,13 +19,10 @@
 	import { user } from '$lib/state/user.svelte';
 
 	const linksResult = useQuery(api.links.listShortIdsByUser, () => {
-		if (!globalState.hydrated || !user.data.current) {
+		if (!globalState.hydrated || !user.authArgs) {
 			return 'skip';
 		}
-		return {
-			userId: user.data.current.id as Id<'users'>,
-			token: user.data.current.token
-		};
+		return user.authArgs;
 	});
 	const links = $derived((linksResult.data ?? []).map((link: { shortId: string }) => link.shortId));
 	const loading = $derived(!globalState.hydrated || linksResult.isLoading);

@@ -2,7 +2,6 @@
 	import { page } from '$app/state';
 	import { useQuery } from 'convex-svelte';
 	import { api } from '$convex/_generated/api';
-	import type { Id } from '$convex/_generated/dataModel';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { globalState } from '$lib/state/global.svelte';
 	import { user } from '$lib/state/user.svelte';
@@ -14,12 +13,11 @@
 	const totalClicksResult = useQuery(
 		api.analytics.totalClicksByShortId,
 		() => {
-			if (!globalState.hydrated || !user.data.current || !shortId) {
+			if (!globalState.hydrated || !user.authArgs || !shortId) {
 				return 'skip';
 			}
 			return {
-				userId: user.data.current.id as Id<'users'>,
-				token: user.data.current.token,
+				...user.authArgs,
 				shortId,
 				start: startTime,
 				end: endTime

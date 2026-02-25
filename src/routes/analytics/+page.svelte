@@ -14,6 +14,7 @@
 	import { page } from '$app/state';
 	import { useLink } from '$lib/hooks/useLink.svelte';
 	import LinkItem from '$lib/components/LinkItem.svelte';
+	import { Loader } from '@lucide/svelte';
 
 	const shortId = $derived(page.url.searchParams.get('shortId') ?? '');
 
@@ -134,6 +135,10 @@
 				</p>
 			</div>
 			<Button href="/">Go to Dashboard</Button>
+		</div>
+	{:else if linkState.isLoading}
+		<div class="flex items-center justify-center p-6">
+			<Loader class="h-5 w-5 animate-spin text-muted-foreground" />
 		</div>
 	{:else if linkState.link}
 		<div class="flex flex-col gap-6 px-3 py-4 sm:py-6">

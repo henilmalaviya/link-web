@@ -15,6 +15,14 @@ export class User {
 	ensuring = $state(false);
 	ensured = $state(false);
 
+	authArgs = $derived.by(() => {
+		if (!this.data.current) return null;
+		return {
+			userId: this.data.current.id as Id<'users'>,
+			token: this.data.current.token
+		};
+	});
+
 	public async ensureUser(convex: ConvexClient) {
 		this.ensuring = true;
 		this.ensured = false;

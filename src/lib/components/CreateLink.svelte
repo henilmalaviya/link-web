@@ -32,7 +32,6 @@
 	import { toast } from 'svelte-sonner';
 	import { copyToClipboard } from '$lib/utils/clipboard';
 	import { getErrorMessage } from '$lib/utils/error.js';
-	import { getAuthArgs } from '$lib/hooks/useAuth.svelte.ts';
 
 	let { onSubmit, children } = $props<{
 		onSubmit?: (payload: { url: string; slug?: string }) => void;
@@ -62,8 +61,8 @@
 	const submit = async () => {
 		const trimmedUrl = url.trim();
 		if (!trimmedUrl || isSubmitting) return;
-		const auth = getAuthArgs();
-		if (auth === 'skip') {
+		const auth = user.authArgs;
+		if (!auth) {
 			errorMessage = 'Please wait while we set up your account.';
 			return;
 		}

@@ -2,7 +2,6 @@
 	import { onMount, type Snippet } from 'svelte';
 	import { useQuery } from 'convex-svelte';
 	import { api } from '$convex/_generated/api';
-	import type { Id } from '$convex/_generated/dataModel';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { Copy, CornerDownRight, MoreHorizontal, Sparkles, ExternalLink } from '@lucide/svelte';
@@ -51,12 +50,11 @@
 	const clicksResult = $derived.by(() => {
 		if (providedLink || providedError) return null;
 		return useQuery(api.analytics.totalClicksByShortId, () => {
-			if (!globalState.hydrated || !user.data.current) {
+			if (!globalState.hydrated || !user.authArgs) {
 				return 'skip';
 			}
 			return {
-				userId: user.data.current.id as Id<'users'>,
-				token: user.data.current.token,
+				...user.authArgs,
 				shortId
 			};
 		});
