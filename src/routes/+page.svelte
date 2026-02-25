@@ -8,11 +8,12 @@
 	import { Search, Filter, LayoutGrid, MoreHorizontal, BarChart3, Loader } from '@lucide/svelte';
 	import LinkCard from '$lib/components/LinkCard.svelte';
 	import { globalState } from '$lib/state/global.svelte';
+	import type { Id } from '$convex/_generated/dataModel';
 
 	const linksResult = useQuery(api.links.listShortIdsByUser, () =>
 		globalState.hydrated && user.data.current
 			? {
-					userId: user.data.current.id,
+					userId: user.data.current.id as Id<'users'>,
 					token: user.data.current.token
 				}
 			: 'skip'

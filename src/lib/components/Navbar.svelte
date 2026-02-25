@@ -14,14 +14,14 @@
 	class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
 >
 	<div class="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6 lg:px-8">
-		<div class="flex items-center gap-2">
+		<a href="/" class="flex items-center gap-2">
 			<div
 				class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"
 			>
 				<Link class="h-4 w-4" />
 			</div>
 			<span class="text-lg font-bold">Link</span>
-		</div>
+		</a>
 
 		<div class="flex items-center gap-4">
 			<!-- Create Link Button -->

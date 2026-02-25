@@ -9,9 +9,9 @@
 	import { Copy, ExternalLink, CornerDownRight, MoreHorizontal, Sparkles } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { copyToClipboard } from '$lib/utils/clipboard';
-	import moment from 'moment';
 	import { globalState } from '$lib/state/global.svelte';
 	import type { Id } from '$convex/_generated/dataModel';
+	import { DateTime } from 'luxon';
 
 	let { shortId } = $props<{ shortId: string }>();
 
@@ -31,16 +31,25 @@
 	const formatDate = (timestamp?: number | string) => {
 		const value = Number(timestamp);
 		if (!Number.isFinite(value)) return '—';
-		const createdAt = moment(value);
-		const hours = moment().diff(createdAt, 'hours', true);
+
+		const createdAt = DateTime.fromMillis(value);
+		const now = DateTime.now();
+
+		// Equivalent to moment().diff(..., 'hours', true)
+		const hours = now.diff(createdAt).as('hours');
+
 		if (hours < 1) {
-			const minutes = Math.max(1, Math.floor(moment().diff(createdAt, 'minutes', true)));
-			return `${minutes}m`;
+			const minutes = now.diff(createdAt).as('minutes');
+			const displayMinutes = Math.max(1, Math.floor(minutes));
+			return `${displayMinutes}m`;
 		}
+
 		if (hours < 24) {
 			return `${Math.floor(hours)}h`;
 		}
-		return createdAt.format('MMM D, YYYY');
+
+		// Note: Luxon uses 'd' for day without padding and 'yyyy' for 4-digit year
+		return createdAt.toFormat('MMM d, yyyy');
 	};
 
 	const getHostname = (urlString: string) => {
@@ -75,7 +84,7 @@
 			: 'skip'
 	);
 
-	const clicksResult = useQuery(api.redirects.countByShortId, () =>
+	const clicksResult = useQuery(api.analytics.totalClicksByShortId, () =>
 		globalState.hydrated && user.data.current && shortId
 			? {
 					userId: user.data.current.id as Id<'users'>,
@@ -165,15 +174,16 @@
 				</div>
 			</div>
 			<div class="flex items-center justify-end gap-2 sm:gap-5">
-				<div
+				<a
+					href={`/analytics?shortId=${link.shortId}`}
 					class={cn(
 						'flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600 tabular-nums',
-						clicksResult.data && clicksResult.data > 0 && 'text-sky-700'
+						clicksResult.data && clicksResult.data.totalClicks > 0 && 'text-sky-700'
 					)}
 				>
 					<Sparkles class="h-3.5 w-3.5" />
-					<span>{clicksResult.data ?? 0} clicks</span>
-				</div>
+					<span>{clicksResult.data?.totalClicks ?? 0} clicks</span>
+				</a>
 				<Button variant="ghost" size="sm" class="h-7 w-7 p-0">
 					<MoreHorizontal class="h-4 w-4" />
 				</Button>
