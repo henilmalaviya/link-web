@@ -18,8 +18,8 @@ export const redirectSchema = {
 	meta: v.object({
 		geolocation: v.nullable(
 			v.object({
-				country: v.optional(v.string()),
-				region: v.optional(v.string()),
+				countryCode: v.optional(v.string()),
+				regionCode: v.optional(v.string()),
 				city: v.optional(v.string()),
 				rawIp: v.optional(v.string())
 			})

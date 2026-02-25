@@ -4,7 +4,7 @@ import { publicMutation, protectedShortIdQuery } from './users';
 import { linkSchema } from './schema';
 import { internalAction, internalMutation, internalQuery } from './_generated/server';
 import { internal } from './_generated/api';
-import { parseUserAgent } from './utilts';
+import { parseUserAgent } from './utils/ua';
 
 /* -------------------------------------------------------------------------- */
 // INTERNALS
@@ -63,8 +63,8 @@ export const applyGeolocationResults = internalMutation({
 				redirectId: v.id('redirects'),
 				status: v.union(v.literal('done'), v.literal('failed')),
 				city: v.optional(v.string()),
-				country: v.optional(v.string()),
-				region: v.optional(v.string())
+				countryCode: v.optional(v.string()),
+				regionCode: v.optional(v.string())
 			})
 		)
 	},
@@ -82,8 +82,8 @@ export const applyGeolocationResults = internalMutation({
 						update.status === 'done'
 							? {
 									city: update.city,
-									country: update.country,
-									region: update.region
+									countryCode: update.countryCode,
+									regionCode: update.regionCode
 								}
 							: null,
 					status: {
@@ -111,7 +111,7 @@ export const processPendingRedirects = internalAction({
 
 		const requests = pending.map((redirect) => ({
 			query: redirect.ip,
-			fields: 'city,country,regionName,query,status'
+			fields: 'city,countryCode,region,query,status'
 		}));
 
 		let responses: Array<Record<string, unknown>> = [];
@@ -145,8 +145,8 @@ export const processPendingRedirects = internalAction({
 				redirectId: redirect.redirectId,
 				status: status as 'done' | 'failed',
 				city: status === 'done' ? (response.city as string | undefined) : undefined,
-				country: status === 'done' ? (response.country as string | undefined) : undefined,
-				region: status === 'done' ? (response.regionName as string | undefined) : undefined
+				countryCode: status === 'done' ? (response.countryCode as string | undefined) : undefined,
+				regionCode: status === 'done' ? (response.region as string | undefined) : undefined
 			};
 		});
 

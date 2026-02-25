@@ -15,7 +15,7 @@ import type * as links from "../links.js";
 import type * as redirects from "../redirects.js";
 import type * as users from "../users.js";
 import type * as utils_timeSeries from "../utils/timeSeries.js";
-import type * as utilts from "../utilts.js";
+import type * as utils_ua from "../utils/ua.js";
 
 import type {
   ApiFromModules,
@@ -31,7 +31,7 @@ declare const fullApi: ApiFromModules<{
   redirects: typeof redirects;
   users: typeof users;
   "utils/timeSeries": typeof utils_timeSeries;
-  utilts: typeof utilts;
+  "utils/ua": typeof utils_ua;
 }>;
 
 /**

@@ -21,8 +21,11 @@ export function parseUserAgent(userAgent: string | undefined): {
 		parsed.browser = result.browser.name;
 	}
 
+	// The Fix: If device type is undefined but we found an OS or Browser, it's a desktop
 	if (result.device.type) {
 		parsed.device = result.device.type;
+	} else if (result.os.name || result.browser.name) {
+		parsed.device = 'desktop';
 	}
 
 	return parsed;

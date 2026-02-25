@@ -1,15 +1,15 @@
 import { DateTime, DateTimeUnit } from 'luxon';
 
 export interface TimeSeriesParams<T, R> {
-	data: T[]; // The raw array of database records
-	start: number; // Range start (UTC ms)
-	end: number; // Range end (UTC ms)
-	timezone?: string; // IANA timezone string (default: 'UTC')
-	unit?: DateTimeUnit; // Luxon unit: 'hour', 'day', 'month', etc.
-	step?: number; // Interval size (e.g., 1 for 1 hour, 15 for 15 mins)
-	getTimestamp: (item: T) => number; // Extracts the timestamp from a record
-	getInitialValue: () => R; // Factory for the starting state of an empty bucket
-	reducer: (acc: R, item: T) => R; // The logic to aggregate data into the bucket
+	data: T[];
+	start: number;
+	end: number;
+	timezone?: string;
+	unit?: DateTimeUnit;
+	step?: number;
+	getTimestamp: (item: T) => number;
+	getInitialValue: () => R;
+	reducer: (acc: R, item: T) => R;
 }
 
 export interface Bucket<R> {
@@ -40,9 +40,7 @@ export function createTimeSeriesBuckets<T, R>({
 	while (currentBoundary <= localEnd) {
 		const bucketStartUTC = currentBoundary.toMillis();
 
-		// Only include buckets that start strictly before our end time
 		if (bucketStartUTC < end) {
-			// Use a factory function so objects/arrays aren't passed by reference
 			buckets.set(bucketStartUTC, getInitialValue());
 		}
 
@@ -56,10 +54,16 @@ export function createTimeSeriesBuckets<T, R>({
 		// Skip items outside the explicit bounds
 		if (timestamp < start || timestamp >= end) continue;
 
-		const bucketStartUTC = DateTime.fromMillis(timestamp)
-			.setZone(timezone)
-			.startOf(unit)
-			.toMillis();
+		const itemDate = DateTime.fromMillis(timestamp).setZone(timezone);
+
+		// Calculate how many raw units have passed since the start boundary
+		const diffUnits = itemDate.diff(localStart, unit).get(unit);
+
+		// Floor it to the nearest step size (e.g., 7 mins with step 5 becomes 5)
+		const snappedUnits = Math.floor(diffUnits / step) * step;
+
+		// Reconstruct the exact bucket start time
+		const bucketStartUTC = localStart.plus({ [unit]: snappedUnits }).toMillis();
 
 		if (buckets.has(bucketStartUTC)) {
 			const currentValue = buckets.get(bucketStartUTC)!;

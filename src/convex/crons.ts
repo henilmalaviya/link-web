@@ -5,7 +5,7 @@ const crons = cronJobs();
 
 crons.interval(
 	'process pending redirects',
-	{ seconds: 30 },
+	{ seconds: 60 },
 	internal.redirects.processPendingRedirects
 );
 

@@ -67,7 +67,7 @@
 		}
 	});
 
-	$inspect({ timeSeriesResult });
+	$inspect({ buckets });
 </script>
 
 <div class="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:p-6">
@@ -80,7 +80,7 @@
 			</div>
 		{/if}
 	</div>
-	<div class="mt-4">
+	<div class="p-2">
 		{#if loading}
 			<Skeleton class="h-64 w-full" />
 		{:else}

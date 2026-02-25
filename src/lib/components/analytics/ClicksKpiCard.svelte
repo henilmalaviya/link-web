@@ -30,8 +30,6 @@
 
 	const loading = $derived(!globalState.hydrated || totalClicksResult.isLoading);
 	const totalClicks = $derived(totalClicksResult.data?.totalClicks ?? 0);
-
-	$inspect({ totalClicks });
 </script>
 
 <div class="rounded-xl border bg-card p-4 sm:p-5">

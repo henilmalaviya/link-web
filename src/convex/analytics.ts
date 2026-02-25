@@ -94,6 +94,8 @@ export const timeSeriesByShortId = protectedShortIdQuery({
 			CHART_GRANULARITY_TIERS.find((tier) => diffHours <= tier.maxHours) ??
 			CHART_GRANULARITY_TIERS[CHART_GRANULARITY_TIERS.length - 1]; // Fallback to largest
 
+		console.log({ diffHours, config, loopStart, loopEnd, redirects });
+
 		const { unit, tickUnit, tickStep, unitStep } = config;
 
 		const timeSeriesBuckets = createTimeSeriesBuckets({
@@ -118,6 +120,87 @@ export const timeSeriesByShortId = protectedShortIdQuery({
 				tickUnit,
 				tickStep
 			}
+		};
+	}
+});
+
+export const aggregateClicksByShortId = protectedShortIdQuery({
+	args: {
+		start: v.optional(v.number()),
+		end: v.optional(v.number()),
+		groupBy: v.union(
+			v.literal('country'),
+			v.literal('city'),
+			v.literal('region'),
+			v.literal('device'),
+			v.literal('browser'),
+			v.literal('os')
+		)
+	},
+	handler: async (ctx, args) => {
+		const { shortId, start = 0, end, groupBy } = args;
+
+		// Fetch the scoped redirects
+		const redirects = await fetchRedirects(ctx, { shortId, start, end });
+
+		// Count the occurrences
+		const counts = new Map<string, { count: number; country?: string }>();
+
+		for (const redirect of redirects) {
+			let key = 'Unknown';
+			let countryCode = redirect.meta?.geolocation?.countryCode;
+
+			switch (groupBy) {
+				case 'country':
+				case 'region':
+				case 'city':
+					if (
+						redirect.meta.status.geolocation === 'pending' ||
+						redirect.meta.status.geolocation === 'processing'
+					) {
+						// If geolocation is not yet resolved, skip this redirect for location-based aggregations
+						continue;
+					}
+			}
+
+			switch (groupBy) {
+				case 'country':
+					key = countryCode || 'Unknown';
+					break;
+				case 'city':
+					key = redirect.meta?.geolocation?.city || 'Unknown';
+					break;
+				case 'region':
+					key = redirect.meta?.geolocation?.regionCode || 'Unknown';
+					break;
+				case 'device':
+					key = redirect.meta?.userAgent?.device || 'Unknown';
+					break;
+				case 'browser':
+					key = redirect.meta?.userAgent?.browser || 'Unknown';
+					break;
+				case 'os':
+					key = redirect.meta?.userAgent?.os || 'Unknown';
+					break;
+			}
+
+			const existing = counts.get(key);
+			counts.set(key, {
+				count: (existing?.count || 0) + 1,
+				// Only attach the country if we are looking at location tabs
+				country: ['city', 'region'].includes(groupBy) ? countryCode : undefined
+			});
+		}
+
+		return {
+			total: Array.from(counts.values()).reduce((sum, item) => sum + item.count, 0),
+			counts: Array.from(counts.entries())
+				.map(([name, data]) => ({
+					name,
+					clicks: data.count,
+					country: data.country
+				}))
+				.sort((a, b) => b.clicks - a.clicks)
 		};
 	}
 });

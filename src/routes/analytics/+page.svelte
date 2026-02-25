@@ -6,6 +6,10 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { DateTime } from 'luxon';
+	import ClicksListCard from '$lib/components/analytics/ClicksListCard.svelte';
+	import { page } from '$app/state';
+
+	const shortId = $derived(page.url.searchParams.get('shortId') ?? '');
 
 	const ranges = [
 		{
@@ -55,12 +59,9 @@
 		<div class="flex flex-wrap items-center justify-between gap-3">
 			<h1 class="text-xl font-bold">Analytics</h1>
 			<div class="flex flex-wrap gap-2">
-				<Button variant="outline" size="sm" class="gap-2">
+				<Button disabled variant="outline" size="sm" class="gap-2">
 					<FilterIcon class="h-4 w-4" />
 					<span>Filter</span>
-					<span class="rounded-full bg-foreground px-1.5 text-[10px] font-semibold text-background">
-						1
-					</span>
 				</Button>
 				<Select.Root type="single" bind:value={rangeKey}>
 					<Select.Trigger size="sm" class="gap-2">
@@ -79,7 +80,13 @@
 		</div>
 	</div>
 	<div class="flex flex-col gap-6 px-3 py-4 sm:py-6">
-		<ClicksKpiCard {startTime} {endTime} />
-		<ClicksTimeSeriesChart {startTime} {endTime} />
+		{#if shortId}
+			<ClicksKpiCard {startTime} {endTime} />
+			<ClicksTimeSeriesChart {startTime} {endTime} />
+			<div class="grid w-full grid-cols-2 gap-6">
+				<ClicksListCard {shortId} {startTime} {endTime} groups={['country', 'region', 'city']} />
+				<ClicksListCard {shortId} {startTime} {endTime} groups={['device', 'browser', 'os']} />
+			</div>
+		{/if}
 	</div>
 </div>
