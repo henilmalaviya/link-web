@@ -1,19 +1,71 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
 	import { useQuery } from 'convex-svelte';
 	import { api } from '$convex/_generated/api';
-	import { user } from '$lib/state/user.svelte';
-	import { cn, getErrorMessage } from '$lib/utils.js';
+	import type { Id } from '$convex/_generated/dataModel';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { Copy, ExternalLink, CornerDownRight, MoreHorizontal, Sparkles } from '@lucide/svelte';
+	import { Copy, CornerDownRight, MoreHorizontal, Sparkles, ExternalLink } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { copyToClipboard } from '$lib/utils/clipboard';
+	import { getFavicon, getHostname } from '$lib/utils/url.js';
+	import { formatDate } from '$lib/utils/date.js';
+	import { getErrorMessage } from '$lib/utils/error.js';
+	import { useLink } from '$lib/hooks/useLink.svelte';
 	import { globalState } from '$lib/state/global.svelte';
-	import type { Id } from '$convex/_generated/dataModel';
-	import { DateTime } from 'luxon';
+	import { user } from '$lib/state/user.svelte';
 
-	let { shortId } = $props<{ shortId: string }>();
+	interface LinkData {
+		url: string;
+		shortId: string;
+		_creationTime: number;
+	}
+
+	interface Props {
+		shortId: string;
+		link?: LinkData;
+		isLoading?: boolean;
+		error?: unknown;
+		clicks?: number;
+		children?: Snippet;
+		trailing?: Snippet<[clicks: number | undefined]>;
+		errorSnippet?: Snippet;
+	}
+
+	let {
+		shortId,
+		link: providedLink,
+		isLoading: providedIsLoading = false,
+		error: providedError,
+		clicks: providedClicks,
+		children,
+		trailing,
+		errorSnippet
+	}: Props = $props();
+
+	const linkState = $derived.by(() => {
+		if (providedLink || providedError) return null;
+		return useLink(() => shortId);
+	});
+
+	const clicksResult = $derived.by(() => {
+		if (providedLink || providedError) return null;
+		return useQuery(api.analytics.totalClicksByShortId, () => {
+			if (!globalState.hydrated || !user.data.current) {
+				return 'skip';
+			}
+			return {
+				userId: user.data.current.id as Id<'users'>,
+				token: user.data.current.token,
+				shortId
+			};
+		});
+	});
+
+	const link = $derived(providedLink ?? linkState?.link ?? null);
+	const isLoading = $derived(providedIsLoading || (!!linkState && linkState.isLoading));
+	const error = $derived(providedError ?? linkState?.error ?? null);
+	const clicks = $derived(providedClicks ?? (link ? clicksResult?.data?.totalClicks : undefined));
 
 	let domain = $state('');
 	let protocol = $state('');
@@ -28,43 +80,6 @@
 		protocol = window.location.protocol;
 	});
 
-	const formatDate = (timestamp?: number | string) => {
-		const value = Number(timestamp);
-		if (!Number.isFinite(value)) return '—';
-
-		const createdAt = DateTime.fromMillis(value);
-		const now = DateTime.now();
-
-		// Equivalent to moment().diff(..., 'hours', true)
-		const hours = now.diff(createdAt).as('hours');
-
-		if (hours < 1) {
-			const minutes = now.diff(createdAt).as('minutes');
-			const displayMinutes = Math.max(1, Math.floor(minutes));
-			return `${displayMinutes}m`;
-		}
-
-		if (hours < 24) {
-			return `${Math.floor(hours)}h`;
-		}
-
-		// Note: Luxon uses 'd' for day without padding and 'yyyy' for 4-digit year
-		return createdAt.toFormat('MMM d, yyyy');
-	};
-
-	const getHostname = (urlString: string) => {
-		try {
-			return new URL(urlString).hostname.replace(/^www\./, '');
-		} catch {
-			return urlString;
-		}
-	};
-
-	const getFavicon = (urlString: string) => {
-		const hostname = getHostname(urlString);
-		return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
-	};
-
 	const copyShortLink = async () => {
 		const copied = await copyToClipboard(shortUrl);
 		if (copied) {
@@ -73,29 +88,9 @@
 			toast.error('Failed to copy short link');
 		}
 	};
-
-	const linkResult = useQuery(api.links.getByShortId, () =>
-		globalState.hydrated && user.data.current
-			? {
-					userId: user.data.current.id as Id<'users'>,
-					token: user.data.current.token,
-					shortId
-				}
-			: 'skip'
-	);
-
-	const clicksResult = useQuery(api.analytics.totalClicksByShortId, () =>
-		globalState.hydrated && user.data.current && shortId
-			? {
-					userId: user.data.current.id as Id<'users'>,
-					token: user.data.current.token,
-					shortId
-				}
-			: 'skip'
-	);
 </script>
 
-{#if !globalState.hydrated || linkResult.isLoading}
+{#if isLoading}
 	<div class="rounded-xl border bg-card">
 		<div class="flex items-center gap-3 px-3 py-3 text-sm sm:gap-5 sm:px-4 sm:py-5 md:gap-12">
 			<div class="min-w-0 grow">
@@ -110,23 +105,27 @@
 			<div class="flex items-center justify-end gap-2">
 				<Skeleton class="h-7 w-14 rounded-md sm:w-20" />
 				<Skeleton class="h-7 w-7 rounded-md" />
+				<Skeleton class="h-7 w-7 rounded-md" />
 			</div>
 		</div>
 	</div>
-{:else if linkResult.error}
-	<div
-		class="flex items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-card p-4 text-sm text-destructive"
-	>
-		<div class="flex items-center gap-2">
-			<ExternalLink class="h-4 w-4" />
-			<span>{getErrorMessage(linkResult.error, 'Unable to load link.')}</span>
+{:else if error}
+	{#if errorSnippet}
+		{@render errorSnippet()}
+	{:else}
+		<div
+			class="flex items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-card p-4 text-sm text-destructive"
+		>
+			<div class="flex items-center gap-2">
+				<ExternalLink class="h-4 w-4" />
+				<span>{getErrorMessage(error, 'Unable to load link.')}</span>
+			</div>
+			<Button variant="ghost" size="icon-sm">
+				<MoreHorizontal class="h-4 w-4" />
+			</Button>
 		</div>
-		<Button variant="ghost" size="icon-sm">
-			<MoreHorizontal class="h-4 w-4" />
-		</Button>
-	</div>
-{:else if linkResult.data}
-	{@const link = linkResult.data}
+	{/if}
+{:else if link}
 	<div class="rounded-xl border bg-card">
 		<div class="flex items-center gap-3 px-3 py-3 text-sm sm:gap-5 sm:px-4 sm:py-5 md:gap-12">
 			<div class="min-w-0 grow">
@@ -175,21 +174,21 @@
 					</div>
 				</div>
 			</div>
-			<div class="flex items-center justify-end gap-2 sm:gap-5">
-				<a
-					href={`/analytics?shortId=${link.shortId}`}
-					class={cn(
-						'flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600 tabular-nums',
-						clicksResult.data && clicksResult.data.totalClicks > 0 && 'text-sky-700'
-					)}
-				>
-					<Sparkles class="h-3.5 w-3.5" />
-					<span class="hidden sm:inline">{clicksResult.data?.totalClicks ?? 0} clicks</span>
-				</a>
-				<Button variant="ghost" size="sm" class="h-7 w-7 p-0">
-					<MoreHorizontal class="h-4 w-4" />
-				</Button>
-			</div>
+			{#if trailing}
+				{@render trailing(clicks)}
+			{:else if clicks !== undefined}
+				<div class="flex shrink-0 items-center gap-2">
+					<div
+						class="flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600 tabular-nums {clicks >
+						0
+							? 'text-sky-700'
+							: ''}"
+					>
+						<Sparkles class="h-3.5 w-3.5" />
+						<span>{clicks}</span>
+					</div>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}

@@ -16,17 +16,19 @@
 
 	const timeSeriesResult = useQuery(
 		api.analytics.timeSeriesByShortId,
-		() =>
-			globalState.hydrated && user.data.current && shortId
-				? {
-						userId: user.data.current.id as Id<'users'>,
-						token: user.data.current.token,
-						shortId,
-						timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-						start: startTime,
-						end: endTime
-					}
-				: 'skip',
+		() => {
+			if (!globalState.hydrated || !user.data.current || !shortId) {
+				return 'skip';
+			}
+			return {
+				userId: user.data.current.id as Id<'users'>,
+				token: user.data.current.token,
+				shortId,
+				timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+				start: startTime,
+				end: endTime
+			};
+		},
 		{
 			keepPreviousData: true
 		}

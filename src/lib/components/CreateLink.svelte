@@ -25,13 +25,14 @@
 	import { onMount, type Snippet } from 'svelte';
 	import { useConvexClient } from 'convex-svelte';
 	import { api } from '$convex/_generated/api';
-	import { user, type UserState } from '$lib/state/user.svelte';
 	import type { Id } from '$convex/_generated/dataModel';
+	import { user, type UserState } from '$lib/state/user.svelte';
 	import { ChevronDown, Shuffle } from '@lucide/svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { toast } from 'svelte-sonner';
 	import { copyToClipboard } from '$lib/utils/clipboard';
-	import { getErrorMessage } from '$lib/utils.js';
+	import { getErrorMessage } from '$lib/utils/error.js';
+	import { getAuthArgs } from '$lib/hooks/useAuth.svelte.ts';
 
 	let { onSubmit, children } = $props<{
 		onSubmit?: (payload: { url: string; slug?: string }) => void;
@@ -61,7 +62,8 @@
 	const submit = async () => {
 		const trimmedUrl = url.trim();
 		if (!trimmedUrl || isSubmitting) return;
-		if (!user.data.current) {
+		const auth = getAuthArgs();
+		if (auth === 'skip') {
 			errorMessage = 'Please wait while we set up your account.';
 			return;
 		}
@@ -72,8 +74,7 @@
 
 		try {
 			const result = await convex.mutation(api.links.create, {
-				userId: user.data.current.id as Id<'users'>,
-				token: user.data.current.token,
+				...auth,
 				url: trimmedUrl,
 				...(trimmedSlug ? { shortId: trimmedSlug } : {})
 			});

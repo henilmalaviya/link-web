@@ -5,19 +5,6 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-export function getErrorMessage(error: unknown, fallback = 'Something went wrong.'): string {
-	if (error && typeof error === 'object' && 'data' in error) {
-		const data = (error as { data?: { message?: string } }).data;
-		if (data?.message) return data.message;
-	}
-
-	if (error instanceof Error && error.message) {
-		return error.message;
-	}
-
-	return fallback;
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type WithoutChild<T> = T extends { child?: any } ? Omit<T, 'child'> : T;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

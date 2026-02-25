@@ -13,16 +13,18 @@
 
 	const totalClicksResult = useQuery(
 		api.analytics.totalClicksByShortId,
-		() =>
-			globalState.hydrated && user.data.current && shortId
-				? {
-						userId: user.data.current.id as Id<'users'>,
-						token: user.data.current.token,
-						shortId,
-						start: startTime,
-						end: endTime
-					}
-				: 'skip',
+		() => {
+			if (!globalState.hydrated || !user.data.current || !shortId) {
+				return 'skip';
+			}
+			return {
+				userId: user.data.current.id as Id<'users'>,
+				token: user.data.current.token,
+				shortId,
+				start: startTime,
+				end: endTime
+			};
+		},
 		{
 			keepPreviousData: true
 		}

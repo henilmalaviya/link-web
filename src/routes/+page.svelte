@@ -1,23 +1,32 @@
 <script lang="ts">
 	import { useQuery } from 'convex-svelte';
 	import { api } from '$convex/_generated/api';
-	import { user } from '$lib/state/user.svelte';
-	import { getErrorMessage } from '$lib/utils.js';
+	import type { Id } from '$convex/_generated/dataModel';
+	import { getErrorMessage } from '$lib/utils/error.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { Search, Filter, LayoutGrid, MoreHorizontal, BarChart3, Loader } from '@lucide/svelte';
-	import LinkCard from '$lib/components/LinkCard.svelte';
+	import {
+		Search,
+		Filter,
+		LayoutGrid,
+		MoreHorizontal,
+		BarChart3,
+		Loader,
+		MousePointerClick
+	} from '@lucide/svelte';
+	import LinkItem from '$lib/components/LinkItem.svelte';
 	import { globalState } from '$lib/state/global.svelte';
-	import type { Id } from '$convex/_generated/dataModel';
+	import { user } from '$lib/state/user.svelte';
 
-	const linksResult = useQuery(api.links.listShortIdsByUser, () =>
-		globalState.hydrated && user.data.current
-			? {
-					userId: user.data.current.id as Id<'users'>,
-					token: user.data.current.token
-				}
-			: 'skip'
-	);
+	const linksResult = useQuery(api.links.listShortIdsByUser, () => {
+		if (!globalState.hydrated || !user.data.current) {
+			return 'skip';
+		}
+		return {
+			userId: user.data.current.id as Id<'users'>,
+			token: user.data.current.token
+		};
+	});
 	const links = $derived((linksResult.data ?? []).map((link: { shortId: string }) => link.shortId));
 	const loading = $derived(!globalState.hydrated || linksResult.isLoading);
 	const errorMessage = $derived(linksResult.error ? getErrorMessage(linksResult.error) : '');
@@ -64,7 +73,27 @@
 		<!-- Links List -->
 		<div class="flex flex-col gap-3">
 			{#each links as shortId (shortId)}
-				<LinkCard {shortId} />
+				<LinkItem {shortId}>
+					{#snippet trailing(clicks)}
+						<div class="flex shrink-0 items-center gap-2">
+							{#if clicks !== undefined}
+								<a
+									href={`/analytics?shortId=${shortId}`}
+									class="flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600 tabular-nums {clicks >
+									0
+										? 'text-sky-700'
+										: ''}"
+								>
+									<MousePointerClick class="h-3.5 w-3.5" />
+									<span>{clicks}</span>
+								</a>
+							{/if}
+							<Button variant="ghost" size="sm" class="h-7 w-7 p-0">
+								<MoreHorizontal class="h-4 w-4" />
+							</Button>
+						</div>
+					{/snippet}
+				</LinkItem>
 			{/each}
 		</div>
 

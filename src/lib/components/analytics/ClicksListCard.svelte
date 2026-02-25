@@ -33,17 +33,19 @@
 
 	const data = useQuery(
 		api.analytics.aggregateClicksByShortId,
-		() =>
-			globalState.hydrated && user.data.current && shortId
-				? {
-						userId: user.data.current.id as Id<'users'>,
-						token: user.data.current.token,
-						shortId,
-						start: startTime,
-						end: endTime,
-						groupBy: selectedGroup
-					}
-				: 'skip',
+		() => {
+			if (!globalState.hydrated || !user.data.current) {
+				return 'skip';
+			}
+			return {
+				userId: user.data.current.id as Id<'users'>,
+				token: user.data.current.token,
+				shortId,
+				start: startTime,
+				end: endTime,
+				groupBy: selectedGroup
+			};
+		},
 		{}
 	);
 
