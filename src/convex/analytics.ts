@@ -12,13 +12,14 @@ export type ChartTimeInterval = 'minute' | 'hour' | 'day' | 'week' | 'month' | '
 interface GranularityConfig {
 	maxHours: number; // The upper limit for this tier
 	unit: ChartTimeInterval; // Data bucket size
+	unitStep?: number;
 	tickUnit: ChartTimeInterval; // X-axis label size
 	tickStep: number; // X-axis label interval
 }
 
 // 3. Create the ordered thresholds (from smallest to largest)
 const CHART_GRANULARITY_TIERS: GranularityConfig[] = [
-	{ maxHours: 1, unit: 'minute', tickUnit: 'minute', tickStep: 10 },
+	{ maxHours: 1, unit: 'minute', unitStep: 5, tickUnit: 'minute', tickStep: 10 },
 	{ maxHours: 24, unit: 'hour', tickUnit: 'hour', tickStep: 4 },
 	{ maxHours: 24 * 7, unit: 'hour', tickUnit: 'day', tickStep: 1 },
 	{ maxHours: 24 * 30, unit: 'day', tickUnit: 'day', tickStep: 5 },
@@ -93,7 +94,7 @@ export const timeSeriesByShortId = protectedShortIdQuery({
 			CHART_GRANULARITY_TIERS.find((tier) => diffHours <= tier.maxHours) ??
 			CHART_GRANULARITY_TIERS[CHART_GRANULARITY_TIERS.length - 1]; // Fallback to largest
 
-		const { unit, tickUnit, tickStep } = config;
+		const { unit, tickUnit, tickStep, unitStep } = config;
 
 		const timeSeriesBuckets = createTimeSeriesBuckets({
 			data: redirects,
@@ -101,6 +102,7 @@ export const timeSeriesByShortId = protectedShortIdQuery({
 			end: loopEnd,
 			timezone,
 			unit,
+			step: unitStep,
 			getTimestamp: (redirect) => redirect._creationTime,
 			getInitialValue: () => 0,
 			reducer: (count) => count + 1
