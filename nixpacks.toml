@@ -10,4 +10,4 @@ cmds = ["bun run build"]
 dependsOn = ["install"]
 
 [start]
-cmd = "bun run build/index.js"
+cmd = "bun run preview"
