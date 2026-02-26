@@ -1,18 +1,42 @@
 import { ConvexError, v } from 'convex/values';
 import { linkSchema } from './schema';
 import {
-	protectedUserMutation,
-	protectedUserQuery,
+	protectedAccountMutation,
+	protectedAccountQuery,
 	protectedShortIdQuery,
 	protectedShortIdMutation,
 	publicQuery
-} from './users';
+} from './accounts';
 import { randomBase62Id } from './crypto';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 
 /* -------------------------------------------------------------------------- */
 // HELPERS
+
+function validateUrl(url: string): void {
+	const trimmed = url.trim();
+	if (!trimmed) {
+		throw new ConvexError({ code: 'INVALID_URL', message: 'URL is required' });
+	}
+	try {
+		const parsed = new URL(trimmed);
+		if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+			throw new ConvexError({
+				code: 'INVALID_URL',
+				message: 'URL must start with http:// or https://'
+			});
+		}
+		if (!parsed.hostname) {
+			throw new ConvexError({
+				code: 'INVALID_URL',
+				message: 'URL must have a valid hostname'
+			});
+		}
+	} catch {
+		throw new ConvexError({ code: 'INVALID_URL', message: 'Invalid URL format' });
+	}
+}
 
 async function generateUniqueShortId(ctx: QueryCtx | MutationCtx): Promise<string> {
 	let attempts = 0;
@@ -58,13 +82,15 @@ export const findByShortId = publicQuery({
 /* -------------------------------------------------------------------------- */
 // PROTECTED FUNCTIONS
 
-export const create = protectedUserMutation({
+export const create = protectedAccountMutation({
 	args: {
 		url: linkSchema.url,
 		shortId: v.optional(linkSchema.shortId)
 	},
 	handler: async (ctx, data) => {
 		const { url, shortId } = data;
+
+		validateUrl(url);
 
 		const finalShortId = shortId || (await generateUniqueShortId(ctx));
 
@@ -80,7 +106,7 @@ export const create = protectedUserMutation({
 			url,
 			shortId: finalShortId,
 			clickCount: 0,
-			ownerId: ctx.user._id
+			ownerId: ctx.account._id
 		});
 
 		return {
@@ -91,14 +117,14 @@ export const create = protectedUserMutation({
 	}
 });
 
-export const generateShortId = protectedUserMutation({
+export const generateShortId = protectedAccountMutation({
 	args: {},
 	handler: async (ctx) => {
 		return generateUniqueShortId(ctx);
 	}
 });
 
-export const listShortIdsByUser = protectedUserQuery({
+export const listShortIdsByUser = protectedAccountQuery({
 	args: {
 		search: v.optional(v.string()),
 		orderBy: v.optional(
@@ -121,7 +147,9 @@ export const listShortIdsByUser = protectedUserQuery({
 		const isTimeOrder = orderBy === 'newest' || orderBy === 'oldest';
 		const isClickOrder = orderBy === 'most_clicks' || orderBy === 'least_clicks';
 
-		let query = ctx.db.query('links').withIndex('byOwnerId', (q) => q.eq('ownerId', ctx.user._id));
+		let query = ctx.db
+			.query('links')
+			.withIndex('byOwnerId', (q) => q.eq('ownerId', ctx.account._id));
 
 		if (isTimeOrder && !search) {
 			// @ts-expect-error Convex allows order on indexed queries
@@ -172,6 +200,7 @@ export const getByShortId = protectedShortIdQuery({
 export const update = protectedShortIdMutation({
 	args: { url: linkSchema.url },
 	handler: async (ctx, { url }) => {
+		validateUrl(url);
 		await ctx.db.patch(ctx.link._id, { url });
 		return { ok: true };
 	}

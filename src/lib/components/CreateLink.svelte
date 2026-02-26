@@ -25,7 +25,7 @@
 	import { onMount, type Snippet } from 'svelte';
 	import { useConvexClient } from 'convex-svelte';
 	import { api } from '$convex/_generated/api';
-	import { userManager } from '$lib/state/userManager.svelte';
+	import { accountManager } from '$lib/state/accountManager.svelte';
 	import { ChevronDown, Shuffle } from '@lucide/svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { toast } from 'svelte-sonner';
@@ -57,10 +57,34 @@
 		domain = window.location.host;
 	});
 
+	const isValidUrl = (urlString: string): boolean => {
+		try {
+			const parsed = new URL(urlString);
+			return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+		} catch {
+			return false;
+		}
+	};
+
+	const isUrlValid = $derived(url.trim() && isValidUrl(url.trim()));
+
 	const submit = async () => {
 		const trimmedUrl = url.trim();
 		if (!trimmedUrl || isSubmitting) return;
-		const auth = userManager.authArgs;
+
+		try {
+			new URL(trimmedUrl);
+		} catch {
+			errorMessage = 'Please enter a valid URL';
+			return;
+		}
+
+		const isValid = isValidUrl(trimmedUrl);
+		if (!isValid) {
+			errorMessage = 'URL must start with http:// or https://';
+			return;
+		}
+		const auth = accountManager.authArgs;
 		if (!auth) {
 			errorMessage = 'Please wait while we set up your account.';
 			return;
@@ -104,7 +128,7 @@
 	};
 
 	const regenerateSlug = async () => {
-		const auth = userManager.authArgs;
+		const auth = accountManager.authArgs;
 		if (!auth || isGenerating) return;
 		isGenerating = true;
 		try {
@@ -174,7 +198,7 @@
 		<button
 			type="button"
 			class="absolute top-0 right-0 text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-			disabled={!userManager.activeAccount || isGenerating}
+			disabled={!accountManager.activeAccount || isGenerating}
 			title={isGenerating ? 'Generating…' : 'Generate new short id'}
 			aria-label="Generate new short id"
 			onclick={() => regenerateSlug()}
@@ -217,7 +241,7 @@
 	<Button type="button" variant="outline" onclick={() => setOpen(false)} disabled={isSubmitting}>
 		Cancel
 	</Button>
-	<Button type="submit" disabled={isSubmitting || !url.trim()}>
+	<Button type="submit" disabled={isSubmitting || !isUrlValid}>
 		{isSubmitting ? 'Creating…' : 'Create link'}
 	</Button>
 {/snippet}
