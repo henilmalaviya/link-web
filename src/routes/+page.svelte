@@ -30,11 +30,18 @@
 	const debounced = new Debounced(() => search, 300);
 	let orderBy = $state<'newest' | 'oldest' | 'most_clicks' | 'least_clicks'>('newest');
 	let currentPage = $state(1);
+	let displayPopoverOpen = $state(false);
 	const limit = 10;
 
 	$effect(() => {
 		if (search) {
 			currentPage = 1;
+		}
+	});
+
+	$effect(() => {
+		if (orderBy) {
+			displayPopoverOpen = false;
 		}
 	});
 
@@ -73,7 +80,7 @@
 				<Filter class="mr-2 h-4 w-4" />
 				Filter
 			</Button>
-			<Popover.Root>
+			<Popover.Root bind:open={displayPopoverOpen}>
 				<Popover.Trigger>
 					<Button variant="outline" size="sm">
 						<LayoutGrid class="mr-2 h-4 w-4" />
