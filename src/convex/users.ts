@@ -223,13 +223,19 @@ export const deleteUser = protectedUserMutation({
 			.collect();
 
 		for (const link of links) {
-			const redirects = await ctx.db
-				.query('redirects')
-				.withIndex('byShortId', (q) => q.eq('shortId', link.shortId))
-				.collect();
+			while (true) {
+				const redirects = await ctx.db
+					.query('redirects')
+					.withIndex('byShortId', (q) => q.eq('shortId', link.shortId))
+					.take(100);
 
-			for (const redirect of redirects) {
-				await ctx.db.delete(redirect._id);
+				if (redirects.length === 0) {
+					break;
+				}
+
+				for (const redirect of redirects) {
+					await ctx.db.delete(redirect._id);
+				}
 			}
 
 			await ctx.db.delete(link._id);

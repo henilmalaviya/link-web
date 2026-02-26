@@ -79,6 +79,7 @@ export const create = protectedUserMutation({
 		const linkId = await ctx.db.insert('links', {
 			url,
 			shortId: finalShortId,
+			clickCount: 0,
 			ownerId: ctx.user._id
 		});
 
@@ -117,10 +118,17 @@ export const listShortIdsByUser = protectedUserQuery({
 		const limit = args.limit ?? 10;
 		const skip = args.skip ?? 0;
 
-		let links = await ctx.db
-			.query('links')
-			.withIndex('byOwnerId', (q) => q.eq('ownerId', ctx.user._id))
-			.collect();
+		const isTimeOrder = orderBy === 'newest' || orderBy === 'oldest';
+		const isClickOrder = orderBy === 'most_clicks' || orderBy === 'least_clicks';
+
+		let query = ctx.db.query('links').withIndex('byOwnerId', (q) => q.eq('ownerId', ctx.user._id));
+
+		if (isTimeOrder && !search) {
+			// @ts-expect-error Convex allows order on indexed queries
+			query = query.order(orderBy === 'newest' ? 'desc' : 'asc');
+		}
+
+		let links = await query.collect();
 
 		if (search) {
 			links = links.filter(
@@ -131,25 +139,16 @@ export const listShortIdsByUser = protectedUserQuery({
 
 		const total = links.length;
 
-		if (orderBy === 'newest') {
-			links.sort((a, b) => (b._creationTime ?? 0) - (a._creationTime ?? 0));
-		} else if (orderBy === 'oldest') {
-			links.sort((a, b) => (a._creationTime ?? 0) - (b._creationTime ?? 0));
-		} else if (orderBy === 'most_clicks' || orderBy === 'least_clicks') {
-			const shortIds = links.map((l) => l.shortId);
-			const clickCounts: Record<string, number> = {};
-
-			for (const shortId of shortIds) {
-				const redirects = await ctx.db
-					.query('redirects')
-					.withIndex('byShortId', (q) => q.eq('shortId', shortId))
-					.collect();
-				clickCounts[shortId] = redirects.length;
-			}
-
+		if (isTimeOrder && search) {
 			links.sort((a, b) => {
-				const countA = clickCounts[a.shortId] ?? 0;
-				const countB = clickCounts[b.shortId] ?? 0;
+				const aTime = a._creationTime ?? 0;
+				const bTime = b._creationTime ?? 0;
+				return orderBy === 'newest' ? bTime - aTime : aTime - bTime;
+			});
+		} else if (isClickOrder) {
+			links.sort((a, b) => {
+				const countA = a.clickCount ?? 0;
+				const countB = b.clickCount ?? 0;
 				return orderBy === 'most_clicks' ? countB - countA : countA - countB;
 			});
 		}
@@ -157,7 +156,7 @@ export const listShortIdsByUser = protectedUserQuery({
 		const paginatedLinks = links.slice(skip, skip + limit);
 
 		return {
-			links: paginatedLinks.map((link) => ({ shortId: link.shortId })),
+			links: paginatedLinks.map((link) => ({ shortId: link.shortId, clickCount: link.clickCount })),
 			total
 		};
 	}
@@ -183,13 +182,19 @@ export const deleteLink = protectedShortIdMutation({
 	handler: async (ctx) => {
 		const link = ctx.link;
 
-		const redirects = await ctx.db
-			.query('redirects')
-			.withIndex('byShortId', (q) => q.eq('shortId', link.shortId))
-			.collect();
+		while (true) {
+			const redirects = await ctx.db
+				.query('redirects')
+				.withIndex('byShortId', (q) => q.eq('shortId', link.shortId))
+				.take(100);
 
-		for (const redirect of redirects) {
-			await ctx.db.delete(redirect._id);
+			if (redirects.length === 0) {
+				break;
+			}
+
+			for (const redirect of redirects) {
+				await ctx.db.delete(redirect._id);
+			}
 		}
 
 		await ctx.db.delete(link._id);

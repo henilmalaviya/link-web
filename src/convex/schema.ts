@@ -9,8 +9,7 @@ export const userSchema = {
 export const linkSchema = {
 	url: v.string(),
 	shortId: v.string(),
-
-	// REF
+	clickCount: v.number(),
 	ownerId: v.id('users')
 };
 

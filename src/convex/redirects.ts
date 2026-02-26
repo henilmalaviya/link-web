@@ -9,6 +9,24 @@ import { parseUserAgent } from './utils/ua';
 /* -------------------------------------------------------------------------- */
 // INTERNALS
 
+export const incrementClickCount = internalMutation({
+	args: {
+		shortId: v.string()
+	},
+	handler: async (ctx, { shortId }) => {
+		const link = await ctx.db
+			.query('links')
+			.withIndex('byShortId', (q) => q.eq('shortId', shortId))
+			.first();
+		if (!link) {
+			return;
+		}
+		await ctx.db.patch(link._id, {
+			clickCount: (link.clickCount ?? 0) + 1
+		});
+	}
+});
+
 export const fetchPendingRedirects = internalQuery({
 	args: {},
 	handler: async (ctx) => {
@@ -181,6 +199,8 @@ export const create = publicMutation({
 				}
 			}
 		});
+
+		await ctx.runMutation(internal.redirects.incrementClickCount, { shortId });
 
 		return { ok: true };
 	}
