@@ -4,19 +4,12 @@
 	import { getErrorMessage } from '$lib/utils/error.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import * as Popover from '$lib/components/ui/popover';
-	import * as Select from '$lib/components/ui/select';
 	import {
 		Search,
 		Filter,
-		LayoutGrid,
 		MoreHorizontal,
-		BarChart3,
 		Loader,
 		MousePointerClick,
-		ArrowUpDown,
-		ArrowUp,
-		ArrowDown,
 		ChevronLeft,
 		ChevronRight,
 		ChartArea
@@ -25,23 +18,17 @@
 	import { globalState } from '$lib/state/global.svelte';
 	import { account } from '$lib/state/account.svelte';
 	import { Debounced } from 'runed';
+	import DisplayOptions from '$lib/components/DisplayOptions.svelte';
 
 	let search = $state('');
 	const debounced = new Debounced(() => search, 300);
 	let orderBy = $state<'newest' | 'oldest' | 'most_clicks' | 'least_clicks'>('newest');
 	let currentPage = $state(1);
-	let displayPopoverOpen = $state(false);
 	const limit = 10;
 
 	$effect(() => {
 		if (search) {
 			currentPage = 1;
-		}
-	});
-
-	$effect(() => {
-		if (orderBy) {
-			displayPopoverOpen = false;
 		}
 	});
 
@@ -81,106 +68,9 @@
 				<Filter class="mr-2 h-4 w-4" />
 				Filter
 			</Button>
-			<Popover.Root bind:open={displayPopoverOpen}>
-				<Popover.Trigger>
-					<Button variant="outline" size="sm">
-						<LayoutGrid class="mr-2 h-4 w-4" />
-						Display
-					</Button>
-				</Popover.Trigger>
-				<Popover.Content align="start" class="w-80">
-					<div class="flex items-center justify-between gap-3">
-						<div class="flex items-center gap-2 text-sm">
-							<ArrowUpDown class="h-4 w-4" />
-							<span>Ordering</span>
-						</div>
-						<Select.Root type="single" bind:value={orderBy}>
-							<Select.Trigger class="w-fit">
-								<span
-									>{orderBy === 'newest'
-										? 'Newest first'
-										: orderBy === 'oldest'
-											? 'Oldest first'
-											: orderBy === 'most_clicks'
-												? 'Most clicks'
-												: 'Least clicks'}</span
-								>
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Item value="newest">
-									<ArrowDown class="mr-2 inline h-4 w-4" />
-									Newest first
-								</Select.Item>
-								<Select.Item value="oldest">
-									<ArrowUp class="mr-2 inline h-4 w-4" />
-									Oldest first
-								</Select.Item>
-								<Select.Item value="most_clicks">
-									<BarChart3 class="mr-2 inline h-4 w-4" />
-									Most clicks
-								</Select.Item>
-								<Select.Item value="least_clicks">
-									<ArrowUpDown class="mr-2 inline h-4 w-4" />
-									Least clicks
-								</Select.Item>
-							</Select.Content>
-						</Select.Root>
-					</div>
-				</Popover.Content>
-			</Popover.Root>
+			<DisplayOptions bind:orderBy />
 		</div>
-		<!-- Mobile: Filter and Display buttons as icons on the right of search -->
-		<div class="flex items-center gap-2 sm:hidden">
-			<Button variant="outline" size="icon" disabled>
-				<Filter class="h-4 w-4" />
-			</Button>
-			<Popover.Root bind:open={displayPopoverOpen}>
-				<Popover.Trigger>
-					<Button variant="outline" size="icon">
-						<LayoutGrid class="h-4 w-4" />
-					</Button>
-				</Popover.Trigger>
-				<Popover.Content align="end" class="w-80">
-					<div class="flex items-center justify-between gap-3">
-						<div class="flex items-center gap-2 text-sm">
-							<ArrowUpDown class="h-4 w-4" />
-							<span>Ordering</span>
-						</div>
-						<Select.Root type="single" bind:value={orderBy}>
-							<Select.Trigger class="w-fit">
-								<span
-									>{orderBy === 'newest'
-										? 'Newest first'
-										: orderBy === 'oldest'
-											? 'Oldest first'
-											: orderBy === 'most_clicks'
-												? 'Most clicks'
-												: 'Least clicks'}</span
-								>
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Item value="newest">
-									<ArrowDown class="mr-2 inline h-4 w-4" />
-									Newest first
-								</Select.Item>
-								<Select.Item value="oldest">
-									<ArrowUp class="mr-2 inline h-4 w-4" />
-									Oldest first
-								</Select.Item>
-								<Select.Item value="most_clicks">
-									<BarChart3 class="mr-2 inline h-4 w-4" />
-									Most clicks
-								</Select.Item>
-								<Select.Item value="least_clicks">
-									<ArrowUpDown class="mr-2 inline h-4 w-4" />
-									Least clicks
-								</Select.Item>
-							</Select.Content>
-						</Select.Root>
-					</div>
-				</Popover.Content>
-			</Popover.Root>
-		</div>
+
 		<div class="flex items-center gap-2">
 			<div class="relative grow">
 				<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
@@ -190,6 +80,13 @@
 					class="w-full pl-8 sm:w-64"
 					bind:value={search}
 				/>
+			</div>
+			<!-- Mobile: Filter and Display buttons as icons on the right of search -->
+			<div class="flex items-center gap-2 sm:hidden">
+				<Button variant="outline" size="icon" disabled>
+					<Filter class="h-4 w-4" />
+				</Button>
+				<DisplayOptions bind:orderBy />
 			</div>
 		</div>
 	</div>
