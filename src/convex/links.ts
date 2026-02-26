@@ -5,7 +5,8 @@ import {
 	protectedAccountQuery,
 	protectedShortIdQuery,
 	protectedShortIdMutation,
-	publicQuery
+	publicQuery,
+	authorizeAccount
 } from './accounts';
 import { randomBase62Id } from './crypto';
 import type { MutationCtx, QueryCtx } from './_generated/server';
@@ -227,6 +228,32 @@ export const deleteLink = protectedShortIdMutation({
 		}
 
 		await ctx.db.delete(link._id);
+		return { ok: true };
+	}
+});
+
+export const moveLink = protectedShortIdMutation({
+	args: {
+		targetUsername: v.string(),
+		targetToken: v.string()
+	},
+	handler: async (ctx, { targetUsername, targetToken }) => {
+		const targetAccount = await authorizeAccount(ctx, {
+			username: targetUsername,
+			token: targetToken
+		});
+
+		if (targetAccount._id === ctx.link.ownerId) {
+			throw new ConvexError({
+				code: 'SAME_ACCOUNT',
+				message: 'Cannot move link to the same account'
+			});
+		}
+
+		await ctx.db.patch(ctx.link._id, {
+			ownerId: targetAccount._id
+		});
+
 		return { ok: true };
 	}
 });

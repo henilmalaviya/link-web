@@ -22,6 +22,7 @@
 	import { accountManager } from '$lib/state/accountManager.svelte';
 	import DeleteLinkDialog from './LinkItem/DeleteLinkDialog.svelte';
 	import EditLinkDialog from './LinkItem/EditLinkDialog.svelte';
+	import MoveLinkDialog from './LinkItem/MoveLinkDialog.svelte';
 
 	interface LinkData {
 		url: string;
@@ -76,6 +77,7 @@
 
 	let editDialogOpen = $state(false);
 	let deleteDialogOpen = $state(false);
+	let moveDialogOpen = $state(false);
 
 	const handleLinkDeleted = () => {
 		deleteDialogOpen = false;
@@ -182,6 +184,10 @@
 							<Pencil class="mr-2 h-4 w-4" />
 							Edit
 						</DropdownMenu.Item>
+						<DropdownMenu.Item onclick={() => (moveDialogOpen = true)}>
+							<CornerDownRight class="mr-2 h-4 w-4" />
+							Move to...
+						</DropdownMenu.Item>
 						<DropdownMenu.Item
 							onclick={() => (deleteDialogOpen = true)}
 							class="text-destructive focus:text-destructive"
@@ -207,4 +213,10 @@
 	{shortId}
 	url={link?.url ?? ''}
 	onSuccess={handleLinkDeleted}
+/>
+<MoveLinkDialog
+	bind:open={moveDialogOpen}
+	{shortId}
+	url={link?.url ?? ''}
+	onSuccess={() => (moveDialogOpen = false)}
 />
