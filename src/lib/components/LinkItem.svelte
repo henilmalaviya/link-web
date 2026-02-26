@@ -56,25 +56,10 @@
 		return useLink(() => shortId);
 	});
 
-	const clicksResult = $derived.by(() => {
-		if (providedLink || providedError) return null;
-		return useQuery(api.analytics.totalClicksByShortId, () => {
-			const auth = accountManager.authArgs;
-			if (!globalState.hydrated || !auth) {
-				return 'skip';
-			}
-			return {
-				username: auth.username,
-				token: auth.token,
-				shortId
-			};
-		});
-	});
-
 	const link = $derived(providedLink ?? linkState?.link ?? null);
 	const isLoading = $derived(providedIsLoading || (!!linkState && linkState.isLoading));
 	const error = $derived(providedError ?? linkState?.error ?? null);
-	const clicks = $derived(providedClicks ?? (link ? clicksResult?.data?.totalClicks : undefined));
+	const clicks = $derived(providedClicks ?? (linkState ? linkState?.link?.clickCount : undefined));
 
 	let domain = $state('');
 	let protocol = $state('');
