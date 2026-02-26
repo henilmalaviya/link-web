@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Kbd } from '$lib/components/ui/kbd/index.js';
-	import { Link, Loader } from '@lucide/svelte';
+	import { Link, Loader, User } from '@lucide/svelte';
 	import CreateLink from '$lib/components/CreateLink.svelte';
 	import UserSwitcher from '$lib/components/UserSwitcher.svelte';
 	import { userManager } from '$lib/state/userManager.svelte';
@@ -41,7 +41,15 @@
 					{/if}
 				</Button>
 			</CreateLink>
-			<UserSwitcher />
+			<UserSwitcher disabled={!globalState.hydrated}>
+				<Button variant="ghost" size="icon" class="rounded-full" disabled={!globalState.hydrated}>
+					{#if !globalState.hydrated}
+						<Loader class="h-5 w-5 animate-spin" />
+					{:else}
+						<User class="h-5 w-5" />
+					{/if}
+				</Button>
+			</UserSwitcher>
 		</div>
 	</div>
 </header>

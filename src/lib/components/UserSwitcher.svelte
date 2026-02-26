@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { type Snippet } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import {
@@ -19,7 +20,7 @@
 		DrawerTrigger
 	} from '$lib/components/ui/drawer/index.js';
 	import { MediaQuery } from 'svelte/reactivity';
-	import { User } from '@lucide/svelte';
+	import { User, Loader } from '@lucide/svelte';
 	import { userManager, type UserAccount } from '$lib/state/userManager.svelte';
 	import CreateUserDialog from './UserSwitcher/CreateUserDialog.svelte';
 	import ImportUserDialog from './UserSwitcher/ImportUserDialog.svelte';
@@ -27,7 +28,18 @@
 	import EditUsernameDialog from './UserSwitcher/EditUsernameDialog.svelte';
 	import DeleteConfirmDialog from './UserSwitcher/DeleteConfirmDialog.svelte';
 
-	let open = $state(false);
+	let {
+		open = $bindable(false),
+		triggerCreateDialog = $bindable(false),
+		disabled = $bindable(false),
+		children
+	}: {
+		open?: boolean;
+		triggerCreateDialog?: boolean;
+		disabled?: boolean;
+		children?: Snippet;
+	} = $props();
+
 	let isMobile = new MediaQuery('(max-width: 640px)');
 	const useDrawer = $derived(isMobile.current);
 
@@ -40,6 +52,13 @@
 	let selectedUsernameForEdit = $state('');
 	let selectedUsernameForDelete = $state('');
 	let selectedUsernameForExport = $state('');
+
+	$effect(() => {
+		if (triggerCreateDialog) {
+			createDialogOpen = true;
+			triggerCreateDialog = false;
+		}
+	});
 
 	const setOpen = (nextOpen: boolean) => {
 		open = nextOpen;
@@ -86,9 +105,9 @@
 </script>
 
 {#snippet triggerContent()}
-	<Button variant="ghost" size="icon" class="rounded-full">
-		<User class="h-5 w-5" />
-	</Button>
+	{#if children}
+		{@render children?.()}
+	{/if}
 {/snippet}
 
 {#snippet userList()}
