@@ -2,12 +2,12 @@
 nixPkgs = ["bun"]
 
 [phases.install]
-dependsOn = ["setup"]
 cmds = ["bun install"]
+dependsOn = ["setup"]
 
 [phases.build]
-dependsOn = ["install"]
 cmds = ["bun run build"]
+dependsOn = ["install"]
 
 [start]
 cmd = "bun run preview"

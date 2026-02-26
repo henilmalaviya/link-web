@@ -1,148 +1,215 @@
 <script lang="ts">
-	import Link from '$lib/components/Link.svelte'
-	import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte'
+	import { useQuery } from 'convex-svelte';
+	import { api } from '$convex/_generated/api';
+	import { getErrorMessage } from '$lib/utils/error.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import * as Popover from '$lib/components/ui/popover';
+	import * as Select from '$lib/components/ui/select';
 	import {
-		activeWorkspace,
-		activeWorkspaceDefaultApiKey,
-		activeWorkspaceId,
-		activeWorkspaceStats,
-	} from '$lib/store'
-	import { getLinkById, getWorkspaceStats } from '$lib/utils/api'
-	import { ExternalLink, Meh } from 'lucide-svelte'
+		Search,
+		Filter,
+		LayoutGrid,
+		MoreHorizontal,
+		BarChart3,
+		Loader,
+		MousePointerClick,
+		ArrowUpDown,
+		ArrowUp,
+		ArrowDown,
+		ChevronLeft,
+		ChevronRight,
+		ChartArea
+	} from '@lucide/svelte';
+	import LinkItem from '$lib/components/LinkItem.svelte';
+	import { globalState } from '$lib/state/global.svelte';
+	import { account } from '$lib/state/account.svelte';
+	import { Debounced } from 'runed';
+
+	let search = $state('');
+	const debounced = new Debounced(() => search, 300);
+	let orderBy = $state<'newest' | 'oldest' | 'most_clicks' | 'least_clicks'>('newest');
+	let currentPage = $state(1);
+	const limit = 10;
+
+	$effect(() => {
+		if (search) {
+			currentPage = 1;
+		}
+	});
+
+	const linksResult = useQuery(api.links.listShortIdsByUser, () => {
+		if (!globalState.hydrated || !account.authArgs) {
+			return 'skip';
+		}
+		return {
+			...account.authArgs,
+			search: debounced.current || undefined,
+			orderBy,
+			limit,
+			skip: (currentPage - 1) * limit
+		};
+	});
+
+	const links = $derived(
+		(linksResult.data?.links ?? []).map((link: { shortId: string }) => link.shortId)
+	);
+	const totalLinks = $derived(linksResult.data?.total ?? 0);
+	const totalPages = $derived(Math.ceil(totalLinks / limit));
+	const showingFrom = $derived(totalLinks === 0 ? 0 : (currentPage - 1) * limit + 1);
+	const showingTo = $derived(Math.min(currentPage * limit, totalLinks));
+	const loading = $derived(!globalState.hydrated || linksResult.isLoading);
+	const errorMessage = $derived(linksResult.error ? getErrorMessage(linksResult.error) : '');
+
+	const isFirstPage = $derived(currentPage <= 1);
+	const isLastPage = $derived(currentPage >= totalPages || totalPages === 0);
 </script>
 
-{#snippet StatsNumberCard(title: string, value: number)}
-	<div class="flex flex-col gap-6 rounded border p-4 pb-6 hover:shadow">
-		<h2 class="text-base font-semibold">{title}</h2>
-		<div class="text-center text-7xl font-semibold text-brand-600">
-			{value}
+<div class="flex grow flex-col gap-6 px-3 py-4 sm:py-6">
+	<!-- Control Bar -->
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="hidden items-center gap-2 sm:flex">
+			<Button variant="outline" size="sm" disabled>
+				<Filter class="mr-2 h-4 w-4" />
+				Filter
+			</Button>
+			<Popover.Root>
+				<Popover.Trigger>
+					<Button variant="outline" size="sm">
+						<LayoutGrid class="mr-2 h-4 w-4" />
+						Display
+					</Button>
+				</Popover.Trigger>
+				<Popover.Content align="start" class="w-80">
+					<div class="flex items-center justify-between gap-3">
+						<div class="flex items-center gap-2 text-sm">
+							<ArrowUpDown class="h-4 w-4" />
+							<span>Ordering</span>
+						</div>
+						<Select.Root type="single" bind:value={orderBy}>
+							<Select.Trigger class="w-fit">
+								<span
+									>{orderBy === 'newest'
+										? 'Newest first'
+										: orderBy === 'oldest'
+											? 'Oldest first'
+											: orderBy === 'most_clicks'
+												? 'Most clicks'
+												: 'Least clicks'}</span
+								>
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Item value="newest">
+									<ArrowDown class="mr-2 inline h-4 w-4" />
+									Newest first
+								</Select.Item>
+								<Select.Item value="oldest">
+									<ArrowUp class="mr-2 inline h-4 w-4" />
+									Oldest first
+								</Select.Item>
+								<Select.Item value="most_clicks">
+									<BarChart3 class="mr-2 inline h-4 w-4" />
+									Most clicks
+								</Select.Item>
+								<Select.Item value="least_clicks">
+									<ArrowUpDown class="mr-2 inline h-4 w-4" />
+									Least clicks
+								</Select.Item>
+							</Select.Content>
+						</Select.Root>
+					</div>
+				</Popover.Content>
+			</Popover.Root>
+		</div>
+		<div class="flex items-center gap-2">
+			<div class="relative grow">
+				<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+				<Input
+					type="text"
+					placeholder="Search by short link or URL"
+					class="w-full pl-8 sm:w-64"
+					bind:value={search}
+				/>
+			</div>
 		</div>
 	</div>
-{/snippet}
 
-<div class="flex w-full flex-grow flex-col gap-6">
-	<h1 class="text-3xl font-semibold">Dashboard</h1>
-	{#await $activeWorkspaceStats}
-		<div class="flex gap-4">
-			<Skeleton class="h-[130px] w-[300px]" />
-			<Skeleton class="h-[130px] w-[300px]" />
-			<Skeleton class="h-[130px] w-[300px]" />
+	{#if loading}
+		<div class="flex items-center justify-center p-6">
+			<Loader class="h-5 w-5 animate-spin text-muted-foreground" />
 		</div>
-		<div class="flex gap-4">
-			<Skeleton class="h-[300px] w-[500px]" />
-			<Skeleton class="h-[300px] w-[500px]" />
+	{:else if errorMessage}
+		<div class="flex items-center justify-center rounded-lg border p-6 text-sm text-destructive">
+			{errorMessage}
 		</div>
-	{:then stats}
-		{#if !stats}
-			<div
-				class="flex w-full flex-col items-center justify-center gap-2 py-16"
-			>
-				<Meh size={64} class="text-destructive" />
-				<h1 class="text-xl font-semibold text-destructive">
-					Oops! Something went wrong.
-				</h1>
-			</div>
-		{:else}
-			{@const data = stats}
-			<div class="stats-grid grid gap-4">
-				{@render StatsNumberCard('Total Links', data.numberOfLinks)}
-				{@render StatsNumberCard(
-					'Total Engagements',
-					data.totalEngagements,
-				)}
-				{@render StatsNumberCard(
-					'Total Engagements (Last Week)',
-					data.totalEngagementsLastWeek,
-				)}
-			</div>
-			{#if data.topPerformingLinks.length > 0}
-				<div
-					class="w-fit min-w-96 max-w-96 space-y-4 rounded border p-4 hover:shadow"
-				>
-					<h2 class="px-2 text-base font-semibold">
-						Top Performing Links
-					</h2>
-					<div class="flex flex-col gap-2">
-						{#snippet Skels()}
-							<Skeleton class="h-[40px] w-full" />
-							<Skeleton class="h-[40px] w-full" />
-							<Skeleton class="h-[40px] w-full" />
-						{/snippet}
+	{:else}
+		<!-- Links List -->
+		<div class="flex flex-col gap-3">
+			{#each links as shortId (shortId)}
+				<LinkItem {shortId}>
+					{#snippet trailing(clicks)}
+						<div class="flex shrink-0 items-center gap-2">
+							{#if clicks !== undefined}
+								<a
+									href={`/analytics?shortId=${shortId}`}
+									class="flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600 tabular-nums {clicks >
+									0
+										? 'text-sky-700'
+										: ''}"
+								>
+									<MousePointerClick class="h-3.5 w-3.5" />
+									<span>{clicks} clicks</span>
+								</a>
+							{/if}
+						</div>
+					{/snippet}
+				</LinkItem>
+			{/each}
+		</div>
 
-						{#await $activeWorkspaceDefaultApiKey}
-							{@render Skels()}
-						{:then apiKey}
-							{#each data.topPerformingLinks as performingLink, index}
-								{#await getLinkById(performingLink.id, $activeWorkspaceId!, apiKey!.key)}
-									<Skeleton class="h-[40px] w-full" />
-								{:then { data: response, error }}
-									{#if error || !response?.data?.data}
-										<div class="flex p-2 text-destructive">
-											Failed to fetch
-										</div>
-									{:else}
-										{@const link = response.data.data}
-										{@const linkHrefWithoutProtocol = `${location.host}/${link.shortName || link.id}`}
-										{@const linkHref = `${location.origin}/${link.shortName || link.id}`}
-										{@const hasTitle =
-											link.title !== null ||
-											link.title !== undefined ||
-											link.title?.trim?.()?.length > 0}
-
-										<div
-											class="flex items-start gap-2 rounded border border-transparent p-2 transition hover:border-brand-600/20 hover:bg-brand-300/5"
-										>
-											<div class="text-sm font-semibold">
-												{index + 1}.
-											</div>
-											<div
-												class="flex flex-grow flex-col gap-0.5"
-											>
-												{#if link.title}
-													<div
-														class="max-w-[30ch] overflow-hidden text-ellipsis whitespace-nowrap text-sm"
-													>
-														{link.title?.trim?.()}
-													</div>
-												{:else}
-													<Link
-														href={linkHref}
-														class="max-w-[30ch] overflow-hidden text-ellipsis whitespace-nowrap tracking-tighter"
-													>
-														{linkHrefWithoutProtocol}
-													</Link>
-												{/if}
-
-												<Link
-													href={link.title
-														? linkHref
-														: link.url}
-													class="max-w-[30ch] overflow-hidden text-ellipsis whitespace-nowrap text-sm tracking-tighter text-muted-foreground"
-												>
-													{link.title
-														? linkHrefWithoutProtocol
-														: link.url}
-												</Link>
-											</div>
-											<div
-												class="text-sm font-semibold text-brand-600"
-											>
-												{performingLink.totalEngagements}
-											</div>
-										</div>
-									{/if}
-								{/await}
-							{/each}
-						{/await}
-					</div>
+		{#if links.length === 0}
+			<div class="flex flex-col items-center justify-center py-12 text-center">
+				<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+					<ChartArea class="h-8 w-8 text-muted-foreground" />
 				</div>
-			{/if}
+				<h3 class="text-lg font-medium">No links found</h3>
+				<p class="mt-2 max-w-sm text-muted-foreground">
+					{debounced.current
+						? 'No links match your search. Try a different search term.'
+						: 'Create your first link to get started with link tracking and analytics.'}
+				</p>
+			</div>
 		{/if}
-	{/await}
-</div>
 
-<style>
-	.stats-grid {
-		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-	}
-</style>
+		<!-- Pagination -->
+		{#if totalLinks > 0}
+			<div
+				class="sticky bottom-0 mt-auto flex flex-col items-center justify-between gap-4 border-t bg-background/80 px-3 py-4 text-sm backdrop-blur-md sm:flex-row sm:px-6"
+			>
+				<div class="text-muted-foreground">
+					Page {currentPage} of {totalPages} | Showing {showingFrom}-{showingTo} of {totalLinks} links
+				</div>
+				<div class="flex items-center gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={isFirstPage}
+						onclick={() => (currentPage = currentPage - 1)}
+					>
+						<ChevronLeft class="h-4 w-4" />
+						Prev
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={isLastPage}
+						onclick={() => (currentPage = currentPage + 1)}
+					>
+						Next
+						<ChevronRight class="h-4 w-4" />
+					</Button>
+				</div>
+			</div>
+		{/if}
+	{/if}
+</div>

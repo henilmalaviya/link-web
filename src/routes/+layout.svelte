@@ -1,53 +1,78 @@
 <script lang="ts">
-	import '../app.css'
-	import DashboardLayout from '$lib/layouts/Dashboard.svelte'
-	import { onMount } from 'svelte'
-	import {
-		activeWorkspace,
-		activeWorkspaceId,
-		hasNoWorkspaces,
-		isStoreHydrating,
-		workspaces,
-	} from '$lib/store'
-	import { Toaster } from '$lib/components/ui/sonner'
-	import { isWorkspaceValid } from '$lib/utils/isWorkspaceValid'
-	import OnBoardingLayout from '$lib/layouts/OnBoarding.svelte'
-	import { Loader2 } from 'lucide-svelte'
-	import { browser } from '$app/environment'
-	import { plausible } from '$lib/plausible'
+	import './layout.css';
+	import favicon from '$lib/assets/favicon.svg';
+	import '@fontsource-variable/nunito-sans';
+	import { PUBLIC_CONVEX_URL } from '$env/static/public';
+	import { setupConvex, useConvexClient } from 'convex-svelte';
+	import { onMount } from 'svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { BarChart3, Loader } from '@lucide/svelte';
+	import { accountManager } from '$lib/state/accountManager.svelte';
+	import { globalState } from '$lib/state/global.svelte';
+	import Navbar from '$lib/components/Navbar.svelte';
+	import AccountSwitcher from '$lib/components/AccountSwitcher.svelte';
+	import { Toaster } from '$lib/components/ui/sonner';
+
+	setupConvex(PUBLIC_CONVEX_URL);
+
+	let { children } = $props();
+
+	const convex = useConvexClient();
+
+	let userSwitcherOpen = $state(false);
+
+	const isHydrated = $derived(globalState.hydrated);
+	const hasNoAccounts = $derived(isHydrated && accountManager.accounts.length === 0);
+	const hasNoActiveUser = $derived(
+		isHydrated && !accountManager.activeAccount && accountManager.accounts.length > 0
+	);
+
+	const handleManageAccounts = () => {
+		userSwitcherOpen = true;
+	};
 
 	onMount(async () => {
-		plausible.enableAutoPageviews()
-	})
-
-	let { children } = $props()
-
-	onMount(() => {
-		setTimeout(async () => {
-			$isStoreHydrating = false
-		}, 500)
-	})
+		await accountManager.ensureAccount(convex);
+	});
 </script>
 
-<Toaster closeButton={true} richColors={true} />
+<svelte:head>
+	<link rel="icon" href={favicon} />
+</svelte:head>
 
-<main class="flex flex-grow flex-col">
-	{#if $isStoreHydrating === true}
-		<div class="flex flex-grow flex-col items-center justify-center p-6">
-			<div
-				class="flex w-full flex-grow flex-col items-center justify-center rounded-xl bg-background text-foreground"
-			>
-				<Loader2
-					class="animate-[spin_500ms_linear_infinite] text-brand-600"
-					size={32}
-				/>
-			</div>
+<div class="mx-auto flex min-h-screen w-full max-w-4xl flex-col">
+	<Navbar />
+	{#if !isHydrated}
+		<div class="flex flex-1 items-center justify-center p-6">
+			<Loader class="h-5 w-5 animate-spin text-muted-foreground" />
 		</div>
-	{:else if $hasNoWorkspaces === true}
-		<OnBoardingLayout />
-	{:else if $hasNoWorkspaces === false}
-		<DashboardLayout>
-			{@render children()}
-		</DashboardLayout>
+	{:else if hasNoAccounts}
+		<div class="flex flex-1 flex-col items-center justify-center py-12 text-center">
+			<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+				<BarChart3 class="h-8 w-8 text-muted-foreground" />
+			</div>
+			<h3 class="text-lg font-medium">No account selected</h3>
+			<p class="mt-2 max-w-sm text-muted-foreground">
+				Create a new account to start creating links.
+			</p>
+			<Button class="mt-4" onclick={handleManageAccounts}>Manage Accounts</Button>
+		</div>
+	{:else if hasNoActiveUser}
+		<div class="flex flex-1 flex-col items-center justify-center py-12 text-center">
+			<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+				<BarChart3 class="h-8 w-8 text-muted-foreground" />
+			</div>
+			<h3 class="text-lg font-medium">No account selected</h3>
+			<p class="mt-2 max-w-sm text-muted-foreground">
+				Select an account from the account menu to view your links.
+			</p>
+			<Button class="mt-4" onclick={() => (userSwitcherOpen = true)}>Select Account</Button>
+		</div>
+	{:else}
+		{@render children()}
 	{/if}
-</main>
+</div>
+
+<AccountSwitcher bind:open={userSwitcherOpen} />
+
+<Toaster />
