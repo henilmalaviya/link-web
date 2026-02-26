@@ -49,63 +49,44 @@
 				<DrawerDescription>Choose how to order your links.</DrawerDescription>
 			</DrawerHeader>
 			<div class="px-4">
-				<div class="flex flex-col gap-3">
+				<div class="flex items-center justify-between gap-3">
 					<div class="flex items-center gap-2 text-sm">
 						<ArrowUpDown class="h-4 w-4" />
 						<span>Ordering</span>
 					</div>
-					<div class="flex flex-col gap-2">
-						<Button
-							variant={orderBy === 'newest' ? 'default' : 'outline'}
-							class="justify-start"
-							onclick={() => {
-								orderBy = 'newest';
-								drawerOpen = false;
-							}}
-						>
-							<ArrowDown class="mr-2 h-4 w-4" />
-							Newest first
-						</Button>
-						<Button
-							variant={orderBy === 'oldest' ? 'default' : 'outline'}
-							class="justify-start"
-							onclick={() => {
-								orderBy = 'oldest';
-								drawerOpen = false;
-							}}
-						>
-							<ArrowUp class="mr-2 h-4 w-4" />
-							Oldest first
-						</Button>
-						<Button
-							variant={orderBy === 'most_clicks' ? 'default' : 'outline'}
-							class="justify-start"
-							onclick={() => {
-								orderBy = 'most_clicks';
-								drawerOpen = false;
-							}}
-						>
-							<BarChart3 class="mr-2 h-4 w-4" />
-							Most clicks
-						</Button>
-						<Button
-							variant={orderBy === 'least_clicks' ? 'default' : 'outline'}
-							class="justify-start"
-							onclick={() => {
-								orderBy = 'least_clicks';
-								drawerOpen = false;
-							}}
-						>
-							<ArrowUpDown class="mr-2 h-4 w-4" />
-							Least clicks
-						</Button>
-					</div>
+					<Select.Root type="single" bind:value={orderBy}>
+						<Select.Trigger class="w-fit">
+							<span
+								>{orderBy === 'newest'
+									? 'Newest first'
+									: orderBy === 'oldest'
+										? 'Oldest first'
+										: orderBy === 'most_clicks'
+											? 'Most clicks'
+											: 'Least clicks'}</span
+							>
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Item value="newest">
+								<ArrowDown class="mr-2 inline h-4 w-4" />
+								Newest first
+							</Select.Item>
+							<Select.Item value="oldest">
+								<ArrowUp class="mr-2 inline h-4 w-4" />
+								Oldest first
+							</Select.Item>
+							<Select.Item value="most_clicks">
+								<BarChart3 class="mr-2 inline h-4 w-4" />
+								Most clicks
+							</Select.Item>
+							<Select.Item value="least_clicks">
+								<ArrowUpDown class="mr-2 inline h-4 w-4" />
+								Least clicks
+							</Select.Item>
+						</Select.Content>
+					</Select.Root>
 				</div>
 			</div>
-			<DrawerFooter class="">
-				<Button variant="outline" class="w-full" onclick={() => (drawerOpen = false)}>Cancel</Button
-				>
-			</DrawerFooter>
 		</DrawerContent>
 	</Drawer>
 {:else}
