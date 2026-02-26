@@ -15,7 +15,7 @@
 		)}
 		{...restProps}
 	>
-		<div class="mx-auto mb-4 h-1.5 w-12 rounded-full bg-muted" />
+		<div class="mx-auto mb-4 h-1.5 w-12 rounded-full bg-muted"></div>
 		{@render children?.()}
 	</DrawerPrimitive.Content>
 </DrawerPrimitive.Portal>
