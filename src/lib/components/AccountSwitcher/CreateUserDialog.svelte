@@ -20,7 +20,7 @@
 	} from '$lib/components/ui/drawer/index.js';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { useConvexClient } from 'convex-svelte';
-	import { userManager } from '$lib/state/userManager.svelte';
+	import { accountManager } from '$lib/state/accountManager.svelte';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error.js';
 	import { generateRandomUsername } from '$lib/utils/username';
@@ -46,12 +46,12 @@
 
 		try {
 			const finalUsername = username.trim() || generateRandomUsername();
-			await userManager.createNewUser(convex, finalUsername);
-			toast.success(`User "${finalUsername}" created`);
+			await accountManager.createNewAccount(convex, finalUsername);
+			toast.success(`Account "${finalUsername}" created`);
 			onSuccess?.();
 			resetForm();
 		} catch (error) {
-			errorMessage = getErrorMessage(error, 'Failed to create user');
+			errorMessage = getErrorMessage(error, 'Failed to create account');
 		} finally {
 			isSubmitting = false;
 		}
@@ -74,9 +74,9 @@
 	<Drawer {open} onOpenChange={handleOpenChange}>
 		<DrawerContent>
 			<DrawerHeader class="">
-				<DrawerTitle>Create New User</DrawerTitle>
+				<DrawerTitle>Create New Account</DrawerTitle>
 				<DrawerDescription
-					>Create a new user account. Leave empty for a random username.</DrawerDescription
+					>Create a new account. Leave empty for a random username.</DrawerDescription
 				>
 			</DrawerHeader>
 			<form
@@ -87,9 +87,9 @@
 				}}
 			>
 				<div class="grid gap-2">
-					<Label for="create-user-username">Username</Label>
+					<Label for="create-account-username">Username</Label>
 					<Input
-						id="create-user-username"
+						id="create-account-username"
 						placeholder="Optional (auto-generated if empty)"
 						autocomplete="off"
 						bind:value={username}
@@ -108,7 +108,7 @@
 						Cancel
 					</Button>
 					<Button type="submit" disabled={isSubmitting}>
-						{isSubmitting ? 'Creating...' : 'Create User'}
+						{isSubmitting ? 'Creating...' : 'Create Account'}
 					</Button>
 				</DrawerFooter>
 			</form>
@@ -118,9 +118,9 @@
 	<Dialog {open} onOpenChange={handleOpenChange}>
 		<DialogContent>
 			<DialogHeader class="">
-				<DialogTitle>Create New User</DialogTitle>
+				<DialogTitle>Create New Account</DialogTitle>
 				<DialogDescription
-					>Create a new user account. Leave empty for a random username.</DialogDescription
+					>Create a new account. Leave empty for a random username.</DialogDescription
 				>
 			</DialogHeader>
 			<form
@@ -131,9 +131,9 @@
 				}}
 			>
 				<div class="grid gap-2">
-					<Label for="create-user-username">Username</Label>
+					<Label for="create-account-username">Username</Label>
 					<Input
-						id="create-user-username"
+						id="create-account-username"
 						placeholder="Optional (auto-generated if empty)"
 						autocomplete="off"
 						bind:value={username}
@@ -152,7 +152,7 @@
 						Cancel
 					</Button>
 					<Button type="submit" disabled={isSubmitting}>
-						{isSubmitting ? 'Creating...' : 'Create User'}
+						{isSubmitting ? 'Creating...' : 'Create Account'}
 					</Button>
 				</DialogFooter>
 			</form>

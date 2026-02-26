@@ -4,7 +4,7 @@
 	import { api } from '$convex/_generated/api';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { globalState } from '$lib/state/global.svelte';
-	import { userManager } from '$lib/state/userManager.svelte';
+	import { accountManager } from '$lib/state/accountManager.svelte';
 
 	let { startTime, endTime } = $props<{ startTime?: number; endTime?: number }>();
 
@@ -13,7 +13,7 @@
 	const totalClicksResult = useQuery(
 		api.analytics.totalClicksByShortId,
 		() => {
-			const auth = userManager.authArgs;
+			const auth = accountManager.authArgs;
 			if (!globalState.hydrated || !auth || !shortId) {
 				return 'skip';
 			}

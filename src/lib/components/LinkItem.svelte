@@ -6,7 +6,6 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import {
-		Copy,
 		CornerDownRight,
 		EllipsisVertical,
 		Sparkles,
@@ -14,14 +13,13 @@
 		Pencil,
 		Trash2
 	} from '@lucide/svelte';
-	import { toast } from 'svelte-sonner';
-	import { copyToClipboard } from '$lib/utils/clipboard';
+	import CopyButton from '$lib/components/ui/copy-button.svelte';
 	import { getFavicon, getHostname } from '$lib/utils/url.js';
 	import { formatDate } from '$lib/utils/date.js';
 	import { getErrorMessage } from '$lib/utils/error.js';
 	import { useLink } from '$lib/hooks/useLink.svelte';
 	import { globalState } from '$lib/state/global.svelte';
-	import { userManager } from '$lib/state/userManager.svelte';
+	import { accountManager } from '$lib/state/accountManager.svelte';
 	import DeleteLinkDialog from './LinkItem/DeleteLinkDialog.svelte';
 	import EditLinkDialog from './LinkItem/EditLinkDialog.svelte';
 
@@ -61,7 +59,7 @@
 	const clicksResult = $derived.by(() => {
 		if (providedLink || providedError) return null;
 		return useQuery(api.analytics.totalClicksByShortId, () => {
-			const auth = userManager.authArgs;
+			const auth = accountManager.authArgs;
 			if (!globalState.hydrated || !auth) {
 				return 'skip';
 			}
@@ -90,15 +88,6 @@
 		domain = window.location.host;
 		protocol = window.location.protocol;
 	});
-
-	const copyShortLink = async () => {
-		const copied = await copyToClipboard(shortUrl);
-		if (copied) {
-			toast.success('Short link copied to clipboard');
-		} else {
-			toast.error('Failed to copy short link');
-		}
-	};
 
 	let editDialogOpen = $state(false);
 	let deleteDialogOpen = $state(false);
@@ -169,14 +158,11 @@
 									{domain ? `${domain}/${link.shortId}` : `/${link.shortId}`}
 								</a>
 							</div>
-							<Button
-								variant="ghost"
+							<CopyButton
+								text={shortUrl}
 								size="icon-sm"
 								class="h-5 w-5 shrink-0 rounded-full p-0"
-								onclick={copyShortLink}
-							>
-								<Copy class="h-3 w-3" />
-							</Button>
+							/>
 						</div>
 						<div class="flex items-center gap-1 text-sm text-neutral-500">
 							<CornerDownRight class="h-3 w-3 shrink-0 text-neutral-400" />

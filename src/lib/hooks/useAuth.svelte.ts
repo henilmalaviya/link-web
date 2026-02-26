@@ -1,4 +1,4 @@
-import { userManager } from '$lib/state/userManager.svelte';
+import { accountManager } from '$lib/state/accountManager.svelte';
 import { globalState } from '$lib/state/global.svelte';
 
 export type AuthArgs = {
@@ -7,11 +7,11 @@ export type AuthArgs = {
 };
 
 export function getAuthArgs(): AuthArgs | 'skip' {
-	if (!globalState.hydrated || !userManager.activeAccount) {
+	if (!globalState.hydrated || !accountManager.activeAccount) {
 		return 'skip';
 	}
 	return {
-		username: userManager.activeAccount.username,
-		token: userManager.activeAccount.token
+		username: accountManager.activeAccount.username,
+		token: accountManager.activeAccount.token
 	};
 }

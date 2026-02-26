@@ -21,7 +21,7 @@
 	import { api } from '$convex/_generated/api';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error.js';
-	import { userManager } from '$lib/state/userManager.svelte';
+	import { accountManager } from '$lib/state/accountManager.svelte';
 	import { globalState } from '$lib/state/global.svelte';
 
 	let {
@@ -45,7 +45,7 @@
 	const handleDelete = async () => {
 		if (isDeleting || !convex) return;
 
-		const auth = userManager.authArgs;
+		const auth = accountManager.authArgs;
 		if (!auth) {
 			toast.error('Not authenticated');
 			return;

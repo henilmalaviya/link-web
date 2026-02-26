@@ -23,7 +23,7 @@
 	import { api } from '$convex/_generated/api';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error.js';
-	import { userManager } from '$lib/state/userManager.svelte';
+	import { accountManager } from '$lib/state/accountManager.svelte';
 	import { globalState } from '$lib/state/global.svelte';
 
 	let {
@@ -74,7 +74,7 @@
 			return;
 		}
 
-		const auth = userManager.authArgs;
+		const auth = accountManager.authArgs;
 		if (!auth) {
 			errorMessage = 'Not authenticated';
 			return;

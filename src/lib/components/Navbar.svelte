@@ -3,8 +3,8 @@
 	import { Kbd } from '$lib/components/ui/kbd/index.js';
 	import { Link, Loader, User } from '@lucide/svelte';
 	import CreateLink from '$lib/components/CreateLink.svelte';
-	import UserSwitcher from '$lib/components/UserSwitcher.svelte';
-	import { userManager } from '$lib/state/userManager.svelte';
+	import AccountSwitcher from '$lib/components/AccountSwitcher.svelte';
+	import { accountManager } from '$lib/state/accountManager.svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { globalState } from '$lib/state/global.svelte';
 
@@ -30,9 +30,9 @@
 					size="default"
 					hotkey="c"
 					hotkeyEnabled={!isMobile.current}
-					disabled={userManager.ensuring || !globalState.hydrated}
+					disabled={accountManager.ensuring || !globalState.hydrated}
 				>
-					{#if userManager.ensuring || !globalState.hydrated}
+					{#if accountManager.ensuring || !globalState.hydrated}
 						<Loader class="h-4 w-4 animate-spin" />
 					{/if}
 					Create link
@@ -41,7 +41,7 @@
 					{/if}
 				</Button>
 			</CreateLink>
-			<UserSwitcher disabled={!globalState.hydrated}>
+			<AccountSwitcher disabled={!globalState.hydrated}>
 				<Button variant="ghost" size="icon" class="rounded-full" disabled={!globalState.hydrated}>
 					{#if !globalState.hydrated}
 						<Loader class="h-5 w-5 animate-spin" />
@@ -49,7 +49,7 @@
 						<User class="h-5 w-5" />
 					{/if}
 				</Button>
-			</UserSwitcher>
+			</AccountSwitcher>
 		</div>
 	</div>
 </header>

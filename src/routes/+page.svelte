@@ -23,7 +23,7 @@
 	} from '@lucide/svelte';
 	import LinkItem from '$lib/components/LinkItem.svelte';
 	import { globalState } from '$lib/state/global.svelte';
-	import { user } from '$lib/state/user.svelte';
+	import { account } from '$lib/state/account.svelte';
 	import { Debounced } from 'runed';
 
 	let search = $state('');
@@ -39,11 +39,11 @@
 	});
 
 	const linksResult = useQuery(api.links.listShortIdsByUser, () => {
-		if (!globalState.hydrated || !user.authArgs) {
+		if (!globalState.hydrated || !account.authArgs) {
 			return 'skip';
 		}
 		return {
-			...user.authArgs,
+			...account.authArgs,
 			search: debounced.current || undefined,
 			orderBy,
 			limit,
@@ -158,7 +158,7 @@
 										: ''}"
 								>
 									<MousePointerClick class="h-3.5 w-3.5" />
-									<span>{clicks}</span>
+									<span>{clicks} clicks</span>
 								</a>
 							{/if}
 						</div>

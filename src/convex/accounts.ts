@@ -25,61 +25,61 @@ export const publicMutation = customMutation(mutation, {
 	}
 });
 
-export async function authorizeUser(
+export async function authorizeAccount(
 	ctx: QueryCtx | MutationCtx,
 	args: {
 		username: string;
 		token: string;
 	}
-): Promise<Doc<'users'>> {
+): Promise<Doc<'accounts'>> {
 	const { username, token } = args;
 
 	const tokenHash = await hash(token);
-	const user = await ctx.db
-		.query('users')
+	const account = await ctx.db
+		.query('accounts')
 		.withIndex('byUsername', (q) => q.eq('username', username))
 		.first();
 
-	if (!user || user.tokenHash !== tokenHash) {
+	if (!account || account.tokenHash !== tokenHash) {
 		throw new Error('Unauthorized');
 	}
 
-	return user;
+	return account;
 }
 
-export const protectedUserQuery = customQuery(query, {
+export const protectedAccountQuery = customQuery(query, {
 	args: {
 		username: v.string(),
 		token: v.string()
 	},
 	input: async (ctx, data) => {
-		const user = await authorizeUser(ctx, data);
+		const account = await authorizeAccount(ctx, data);
 
 		return {
 			args: {
 				token: data.token
 			},
 			ctx: {
-				user
+				account
 			}
 		};
 	}
 });
 
-export const protectedUserMutation = customMutation(mutation, {
+export const protectedAccountMutation = customMutation(mutation, {
 	args: {
 		username: v.string(),
 		token: v.string()
 	},
 	input: async (ctx, data) => {
-		const user = await authorizeUser(ctx, data);
+		const account = await authorizeAccount(ctx, data);
 
 		return {
 			args: {
 				token: data.token
 			},
 			ctx: {
-				user
+				account
 			}
 		};
 	}
@@ -92,7 +92,7 @@ export const protectedShortIdQuery = customQuery(query, {
 		shortId: v.string()
 	},
 	input: async (ctx, data) => {
-		const user = await authorizeUser(ctx, data);
+		const account = await authorizeAccount(ctx, data);
 		const link = await ctx.db
 			.query('links')
 			.withIndex('byShortId', (q) => q.eq('shortId', data.shortId))
@@ -101,7 +101,7 @@ export const protectedShortIdQuery = customQuery(query, {
 		if (!link) {
 			throw new ConvexError({ code: 'LINK_NOT_FOUND', message: 'Link not found' });
 		}
-		if (link.ownerId !== user._id) {
+		if (link.ownerId !== account._id) {
 			throw new ConvexError({ code: 'FORBIDDEN', message: 'Forbidden' });
 		}
 
@@ -110,7 +110,7 @@ export const protectedShortIdQuery = customQuery(query, {
 				shortId: data.shortId
 			},
 			ctx: {
-				user,
+				account,
 				link
 			}
 		};
@@ -124,7 +124,7 @@ export const protectedShortIdMutation = customMutation(mutation, {
 		shortId: v.string()
 	},
 	input: async (ctx, data) => {
-		const user = await authorizeUser(ctx, data);
+		const account = await authorizeAccount(ctx, data);
 		const link = await ctx.db
 			.query('links')
 			.withIndex('byShortId', (q) => q.eq('shortId', data.shortId))
@@ -133,7 +133,7 @@ export const protectedShortIdMutation = customMutation(mutation, {
 		if (!link) {
 			throw new ConvexError({ code: 'LINK_NOT_FOUND', message: 'Link not found' });
 		}
-		if (link.ownerId !== user._id) {
+		if (link.ownerId !== account._id) {
 			throw new ConvexError({ code: 'FORBIDDEN', message: 'Forbidden' });
 		}
 
@@ -142,7 +142,7 @@ export const protectedShortIdMutation = customMutation(mutation, {
 				shortId: data.shortId
 			},
 			ctx: {
-				user,
+				account,
 				link
 			}
 		};
@@ -155,7 +155,7 @@ export const create = mutation({
 	},
 	handler: async (ctx, args) => {
 		const existing = await ctx.db
-			.query('users')
+			.query('accounts')
 			.withIndex('byUsername', (q) => q.eq('username', args.username))
 			.first();
 
@@ -166,45 +166,45 @@ export const create = mutation({
 		const token = randomBase62Id(32);
 		const tokenHash = await hash(token);
 
-		const userId = await ctx.db.insert('users', {
+		const accountId = await ctx.db.insert('accounts', {
 			tokenHash,
 			username: args.username
 		});
 
 		return {
-			id: userId,
+			id: accountId,
 			token,
 			username: args.username
 		};
 	}
 });
 
-export const get = protectedUserQuery({
+export const get = protectedAccountQuery({
 	args: {},
 	handler: async (ctx) => {
 		return {
-			id: ctx.user._id,
-			username: ctx.user.username,
-			createdAt: ctx.user._creationTime
+			id: ctx.account._id,
+			username: ctx.account.username,
+			createdAt: ctx.account._creationTime
 		};
 	}
 });
 
-export const updateUsername = protectedUserMutation({
+export const updateUsername = protectedAccountMutation({
 	args: {
 		newUsername: v.string()
 	},
 	handler: async (ctx, args) => {
 		const existing = await ctx.db
-			.query('users')
+			.query('accounts')
 			.withIndex('byUsername', (q) => q.eq('username', args.newUsername))
 			.first();
 
-		if (existing && existing._id !== ctx.user._id) {
+		if (existing && existing._id !== ctx.account._id) {
 			throw new ConvexError({ code: 'USERNAME_TAKEN', message: 'Username already taken' });
 		}
 
-		await ctx.db.patch(ctx.user._id, {
+		await ctx.db.patch(ctx.account._id, {
 			username: args.newUsername
 		});
 
@@ -212,14 +212,14 @@ export const updateUsername = protectedUserMutation({
 	}
 });
 
-export const deleteUser = protectedUserMutation({
+export const deleteUser = protectedAccountMutation({
 	args: {},
 	handler: async (ctx) => {
-		const userId = ctx.user._id;
+		const accountId = ctx.account._id;
 
 		const links = await ctx.db
 			.query('links')
-			.withIndex('byOwnerId', (q) => q.eq('ownerId', userId))
+			.withIndex('byOwnerId', (q) => q.eq('ownerId', accountId))
 			.collect();
 
 		for (const link of links) {
@@ -241,7 +241,7 @@ export const deleteUser = protectedUserMutation({
 			await ctx.db.delete(link._id);
 		}
 
-		await ctx.db.delete(userId);
+		await ctx.db.delete(accountId);
 
 		return { success: true };
 	}

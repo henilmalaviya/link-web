@@ -1,7 +1,7 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
-export const userSchema = {
+export const accountSchema = {
 	tokenHash: v.string(),
 	username: v.optional(v.string())
 };
@@ -10,7 +10,7 @@ export const linkSchema = {
 	url: v.string(),
 	shortId: v.string(),
 	clickCount: v.number(),
-	ownerId: v.id('users')
+	ownerId: v.id('accounts')
 };
 
 export const redirectSchema = {
@@ -45,7 +45,7 @@ export const redirectSchema = {
 };
 
 export default defineSchema({
-	users: defineTable(userSchema).index('byUsername', ['username']),
+	accounts: defineTable(accountSchema).index('byUsername', ['username']),
 	links: defineTable(linkSchema).index('byShortId', ['shortId']).index('byOwnerId', ['ownerId']),
 	redirects: defineTable(redirectSchema)
 		.index('byShortId', ['shortId'])

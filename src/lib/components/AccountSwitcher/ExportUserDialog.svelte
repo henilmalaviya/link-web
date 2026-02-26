@@ -18,10 +18,8 @@
 		DrawerTitle
 	} from '$lib/components/ui/drawer/index.js';
 	import { MediaQuery } from 'svelte/reactivity';
-	import { userManager } from '$lib/state/userManager.svelte';
-	import { toast } from 'svelte-sonner';
-	import { copyToClipboard } from '$lib/utils/clipboard';
-	import Copy from '@lucide/svelte/icons/copy';
+	import { accountManager } from '$lib/state/accountManager.svelte';
+	import CopyButton from '$lib/components/ui/copy-button.svelte';
 	import Eye from '@lucide/svelte/icons/eye';
 	import EyeOff from '@lucide/svelte/icons/eye-off';
 
@@ -35,26 +33,8 @@
 	const isMobile = new MediaQuery('$(max-width: 640px)');
 	const useDrawer = $derived(isMobile.current);
 
-	const userAccount = $derived(userManager.users.find((u) => u.username === username));
+	const userAccount = $derived(accountManager.accounts.find((u) => u.username === username));
 	const token = $derived(userAccount?.token ?? '');
-
-	const handleCopyUsername = async () => {
-		const success = await copyToClipboard(username);
-		if (success) {
-			toast.success('Username copied to clipboard');
-		} else {
-			toast.error('Failed to copy username');
-		}
-	};
-
-	const handleCopyToken = async () => {
-		const success = await copyToClipboard(token);
-		if (success) {
-			toast.success('Token copied to clipboard');
-		} else {
-			toast.error('Failed to copy token');
-		}
-	};
 
 	const toggleShowToken = () => {
 		showToken = !showToken;
@@ -72,9 +52,9 @@
 	<Drawer {open} onOpenChange={handleOpenChange}>
 		<DrawerContent>
 			<DrawerHeader class="">
-				<DrawerTitle>Export User</DrawerTitle>
+				<DrawerTitle>Share Account</DrawerTitle>
 				<DrawerDescription
-					>Copy your username and token to import this user elsewhere.</DrawerDescription
+					>Copy your username and token to import this account elsewhere.</DrawerDescription
 				>
 			</DrawerHeader>
 			<div class="mt-4 grid gap-4 px-4">
@@ -82,9 +62,7 @@
 					<Label for="export-username">Username</Label>
 					<div class="flex gap-2">
 						<Input id="export-username" value={username} readonly class="flex-1" />
-						<Button type="button" variant="outline" size="icon" onclick={handleCopyUsername}>
-							<Copy class="h-4 w-4" />
-						</Button>
+						<CopyButton text={username} variant="outline" size="icon" />
 					</div>
 				</div>
 				<div class="grid gap-2">
@@ -104,9 +82,7 @@
 								<Eye class="h-4 w-4" />
 							{/if}
 						</Button>
-						<Button type="button" variant="outline" size="icon" onclick={handleCopyToken}>
-							<Copy class="h-4 w-4" />
-						</Button>
+						<CopyButton text={token} variant="outline" size="icon" />
 					</div>
 				</div>
 			</div>
@@ -117,9 +93,9 @@
 	<Dialog {open} onOpenChange={handleOpenChange}>
 		<DialogContent>
 			<DialogHeader class="">
-				<DialogTitle>Export User</DialogTitle>
+				<DialogTitle>Share Account</DialogTitle>
 				<DialogDescription
-					>Copy your username and token to import this user elsewhere.</DialogDescription
+					>Copy your username and token to import this account elsewhere.</DialogDescription
 				>
 			</DialogHeader>
 			<div class="grid gap-4">
@@ -127,9 +103,7 @@
 					<Label for="export-username">Username</Label>
 					<div class="flex gap-2">
 						<Input id="export-username" value={username} readonly class="flex-1" />
-						<Button type="button" variant="outline" size="icon" onclick={handleCopyUsername}>
-							<Copy class="h-4 w-4" />
-						</Button>
+						<CopyButton text={username} variant="outline" size="icon" />
 					</div>
 				</div>
 				<div class="grid gap-2">
@@ -149,9 +123,7 @@
 								<Eye class="h-4 w-4" />
 							{/if}
 						</Button>
-						<Button type="button" variant="outline" size="icon" onclick={handleCopyToken}>
-							<Copy class="h-4 w-4" />
-						</Button>
+						<CopyButton text={token} variant="outline" size="icon" />
 					</div>
 				</div>
 			</div>

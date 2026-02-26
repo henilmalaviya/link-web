@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import type { Id } from './_generated/dataModel';
-import { publicMutation, protectedShortIdQuery } from './users';
+import { publicMutation, protectedShortIdQuery } from './accounts';
 import { linkSchema } from './schema';
 import { internalAction, internalMutation, internalQuery } from './_generated/server';
 import { internal } from './_generated/api';

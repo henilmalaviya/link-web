@@ -20,7 +20,7 @@
 	} from '$lib/components/ui/drawer/index.js';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { useConvexClient } from 'convex-svelte';
-	import { userManager } from '$lib/state/userManager.svelte';
+	import { accountManager } from '$lib/state/accountManager.svelte';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error.js';
 
@@ -67,7 +67,7 @@
 		errorMessage = '';
 
 		try {
-			await userManager.updateUsername(convex, selectedUsernameForEdit, trimmedUsername);
+			await accountManager.updateUsername(convex, selectedUsernameForEdit, trimmedUsername);
 			toast.success(`Username changed to "${trimmedUsername}"`);
 			onSuccess?.();
 			resetForm();

@@ -20,7 +20,7 @@
 	} from '$lib/components/ui/drawer/index.js';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { useConvexClient } from 'convex-svelte';
-	import { userManager } from '$lib/state/userManager.svelte';
+	import { accountManager } from '$lib/state/accountManager.svelte';
 	import { toast } from 'svelte-sonner';
 	import { getErrorMessage } from '$lib/utils/error.js';
 
@@ -57,14 +57,14 @@
 		errorMessage = '';
 
 		try {
-			await userManager.addExistingUser(convex, trimmedUsername, trimmedToken);
-			toast.success(`User "${trimmedUsername}" imported`);
+			await accountManager.addExistingAccount(convex, trimmedUsername, trimmedToken);
+			toast.success(`Account "${trimmedUsername}" imported`);
 			onSuccess?.();
 			resetForm();
 		} catch (error) {
 			errorMessage = getErrorMessage(
 				error,
-				'Failed to import user. Check your username and token.'
+				'Failed to import account. Check your username and token.'
 			);
 		} finally {
 			isSubmitting = false;
@@ -89,9 +89,9 @@
 	<Drawer {open} onOpenChange={handleOpenChange}>
 		<DrawerContent>
 			<DrawerHeader class="">
-				<DrawerTitle>Import User</DrawerTitle>
+				<DrawerTitle>Import Account</DrawerTitle>
 				<DrawerDescription
-					>Enter your username and token to import an existing user.</DrawerDescription
+					>Enter your username and token to import an existing account.</DrawerDescription
 				>
 			</DrawerHeader>
 			<form
@@ -102,18 +102,18 @@
 				}}
 			>
 				<div class="grid gap-2">
-					<Label for="import-user-username">Username</Label>
+					<Label for="import-account-username">Username</Label>
 					<Input
-						id="import-user-username"
+						id="import-account-username"
 						placeholder="Enter username"
 						autocomplete="off"
 						bind:value={username}
 					/>
 				</div>
 				<div class="grid gap-2">
-					<Label for="import-user-token">Token</Label>
+					<Label for="import-account-token">Token</Label>
 					<Input
-						id="import-user-token"
+						id="import-account-token"
 						type="password"
 						placeholder="Enter token"
 						autocomplete="off"
@@ -133,7 +133,7 @@
 						Cancel
 					</Button>
 					<Button type="submit" disabled={isSubmitting}>
-						{isSubmitting ? 'Importing...' : 'Import User'}
+						{isSubmitting ? 'Importing...' : 'Import Account'}
 					</Button>
 				</DrawerFooter>
 			</form>
@@ -143,9 +143,9 @@
 	<Dialog {open} onOpenChange={handleOpenChange}>
 		<DialogContent>
 			<DialogHeader class="">
-				<DialogTitle>Import User</DialogTitle>
+				<DialogTitle>Import Account</DialogTitle>
 				<DialogDescription
-					>Enter your username and token to import an existing user.</DialogDescription
+					>Enter your username and token to import an existing account.</DialogDescription
 				>
 			</DialogHeader>
 			<form
@@ -156,18 +156,18 @@
 				}}
 			>
 				<div class="grid gap-2">
-					<Label for="import-user-username">Username</Label>
+					<Label for="import-account-username">Username</Label>
 					<Input
-						id="import-user-username"
+						id="import-account-username"
 						placeholder="Enter username"
 						autocomplete="off"
 						bind:value={username}
 					/>
 				</div>
 				<div class="grid gap-2">
-					<Label for="import-user-token">Token</Label>
+					<Label for="import-account-token">Token</Label>
 					<Input
-						id="import-user-token"
+						id="import-account-token"
 						type="password"
 						placeholder="Enter token"
 						autocomplete="off"
@@ -187,7 +187,7 @@
 						Cancel
 					</Button>
 					<Button type="submit" disabled={isSubmitting}>
-						{isSubmitting ? 'Importing...' : 'Import User'}
+						{isSubmitting ? 'Importing...' : 'Import Account'}
 					</Button>
 				</DialogFooter>
 			</form>

@@ -8,12 +8,12 @@
  * @module
  */
 
+import type * as accounts from "../accounts.js";
 import type * as analytics from "../analytics.js";
 import type * as crons from "../crons.js";
 import type * as crypto from "../crypto.js";
 import type * as links from "../links.js";
 import type * as redirects from "../redirects.js";
-import type * as users from "../users.js";
 import type * as utils_timeSeries from "../utils/timeSeries.js";
 import type * as utils_ua from "../utils/ua.js";
 
@@ -24,12 +24,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  accounts: typeof accounts;
   analytics: typeof analytics;
   crons: typeof crons;
   crypto: typeof crypto;
   links: typeof links;
   redirects: typeof redirects;
-  users: typeof users;
   "utils/timeSeries": typeof utils_timeSeries;
   "utils/ua": typeof utils_ua;
 }>;

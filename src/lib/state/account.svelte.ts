@@ -1,1 +1,1 @@
-export { userManager as user } from './userManager.svelte';
+export { accountManager as account } from './accountManager.svelte';

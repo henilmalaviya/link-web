@@ -1,17 +1,17 @@
 import { useQuery } from 'convex-svelte';
 import { api } from '$convex/_generated/api';
-import { userManager } from '$lib/state/userManager.svelte';
+import { accountManager } from '$lib/state/accountManager.svelte';
 import { globalState } from '$lib/state/global.svelte';
 
 export function useLink(shortIdGetter: () => string) {
 	const linkResult = useQuery(api.links.getByShortId, () => {
 		const shortId = shortIdGetter();
-		if (!globalState.hydrated || !userManager.activeAccount || !shortId) {
+		if (!globalState.hydrated || !accountManager.activeAccount || !shortId) {
 			return 'skip';
 		}
 		return {
-			username: userManager.activeAccount.username,
-			token: userManager.activeAccount.token,
+			username: accountManager.activeAccount.username,
+			token: accountManager.activeAccount.token,
 			shortId
 		};
 	});

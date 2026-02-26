@@ -21,12 +21,12 @@
 	} from '$lib/components/ui/drawer/index.js';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { User, Loader } from '@lucide/svelte';
-	import { userManager, type UserAccount } from '$lib/state/userManager.svelte';
-	import CreateUserDialog from './UserSwitcher/CreateUserDialog.svelte';
-	import ImportUserDialog from './UserSwitcher/ImportUserDialog.svelte';
-	import ExportUserDialog from './UserSwitcher/ExportUserDialog.svelte';
-	import EditUsernameDialog from './UserSwitcher/EditUsernameDialog.svelte';
-	import DeleteConfirmDialog from './UserSwitcher/DeleteConfirmDialog.svelte';
+	import { accountManager, type Account } from '$lib/state/accountManager.svelte';
+	import CreateUserDialog from './AccountSwitcher/CreateUserDialog.svelte';
+	import ImportUserDialog from './AccountSwitcher/ImportUserDialog.svelte';
+	import ExportUserDialog from './AccountSwitcher/ExportUserDialog.svelte';
+	import EditUsernameDialog from './AccountSwitcher/EditUsernameDialog.svelte';
+	import DeleteConfirmDialog from './AccountSwitcher/DeleteConfirmDialog.svelte';
 
 	let {
 		open = $bindable(false),
@@ -64,8 +64,8 @@
 		open = nextOpen;
 	};
 
-	const handleSelectUser = async (username: string) => {
-		await userManager.switchToUser(username);
+	const handleSelectAccount = async (username: string) => {
+		await accountManager.switchToAccount(username);
 		setOpen(false);
 	};
 
@@ -112,29 +112,29 @@
 
 {#snippet userList()}
 	<div class="flex flex-col gap-1">
-		{#each userManager.users as user (user.username)}
+		{#each accountManager.accounts as account (account.username)}
 			<div
-				class="flex items-center justify-between rounded-md px-3 py-2 transition-colors hover:bg-muted/50 {user.username ===
-				userManager.activeUsername
+				class="flex items-center justify-between rounded-md px-3 py-2 transition-colors hover:bg-muted/50 {account.username ===
+				accountManager.activeUsername
 					? 'bg-muted'
 					: ''}"
 			>
 				<button
 					class="flex flex-1 items-center gap-2 text-left"
-					onclick={() => handleSelectUser(user.username)}
+					onclick={() => handleSelectAccount(account.username)}
 				>
-					{#if user.username === userManager.activeUsername}
+					{#if account.username === accountManager.activeUsername}
 						<span class="flex h-2 w-2 rounded-full bg-primary"></span>
 					{:else}
 						<span class="h-2 w-2 rounded-full border"></span>
 					{/if}
-					<span class="truncate">{user.username}</span>
+					<span class="truncate">{account.username}</span>
 				</button>
 				<div class="flex items-center gap-1">
 					<button
 						class="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
 						title="Edit username"
-						onclick={() => handleEdit(user.username)}
+						onclick={() => handleEdit(account.username)}
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -153,8 +153,8 @@
 					</button>
 					<button
 						class="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
-						title="Delete user"
-						onclick={() => handleDelete(user.username)}
+						title="Delete account"
+						onclick={() => handleDelete(account.username)}
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +177,7 @@
 				</div>
 			</div>
 		{:else}
-			<p class="px-3 py-4 text-center text-sm text-muted-foreground">No users yet</p>
+			<p class="px-3 py-4 text-center text-sm text-muted-foreground">No accounts yet</p>
 		{/each}
 	</div>
 {/snippet}
@@ -204,7 +204,7 @@
 				<path d="M5 12h14"></path>
 				<path d="M12 5v14"></path>
 			</svg>
-			Create New User
+			Create New Account
 		</Button>
 		<Button
 			variant="outline"
@@ -227,13 +227,13 @@
 				<polyline points="7 10 12 15 17 10"></polyline>
 				<line x1="12" x2="12" y1="15" y2="3"></line>
 			</svg>
-			Import User
+			Import Account
 		</Button>
 		<Button
 			variant="outline"
 			class="w-full justify-start"
-			disabled={!userManager.activeAccount}
-			onclick={() => handleExport(userManager.activeUsername!)}
+			disabled={!accountManager.activeAccount}
+			onclick={() => handleExport(accountManager.activeUsername!)}
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -251,7 +251,7 @@
 				<polyline points="17 8 12 3 7 8"></polyline>
 				<line x1="12" x2="12" y1="3" y2="15"></line>
 			</svg>
-			Export User
+			Share Account
 		</Button>
 	</div>
 {/snippet}
@@ -261,8 +261,8 @@
 		<DrawerTrigger>{@render triggerContent()}</DrawerTrigger>
 		<DrawerContent>
 			<DrawerHeader class="">
-				<DrawerTitle>Manage Users</DrawerTitle>
-				<DrawerDescription>Switch between users or manage your accounts.</DrawerDescription>
+				<DrawerTitle>Manage Accounts</DrawerTitle>
+				<DrawerDescription>Switch between accounts or manage your accounts.</DrawerDescription>
 			</DrawerHeader>
 			<div class="mt-4 grid gap-4 px-4">
 				{@render userList()}
@@ -277,8 +277,8 @@
 		<DialogTrigger>{@render triggerContent()}</DialogTrigger>
 		<DialogContent>
 			<DialogHeader class="">
-				<DialogTitle>Manage Users</DialogTitle>
-				<DialogDescription>Switch between users or manage your accounts.</DialogDescription>
+				<DialogTitle>Manage Accounts</DialogTitle>
+				<DialogDescription>Switch between accounts or manage your accounts.</DialogDescription>
 			</DialogHeader>
 			<div class="grid gap-4">
 				{@render userList()}

@@ -3,19 +3,19 @@ import type { ConvexClient } from 'convex/browser';
 import { PersistedState } from 'runed';
 import { generateRandomUsername } from '$lib/utils/username';
 
-export type UserAccount = {
+export type Account = {
 	username: string;
 	token: string;
 };
 
-type UserManagerData = {
-	users: UserAccount[];
+type AccountManagerData = {
+	accounts: Account[];
 	activeUsername: string | null;
 };
 
-export class UserManager {
-	data = new PersistedState<UserManagerData>('link-users', {
-		users: [],
+export class AccountManager {
+	data = new PersistedState<AccountManagerData>('link-accounts', {
+		accounts: [],
 		activeUsername: null
 	});
 
@@ -23,13 +23,13 @@ export class UserManager {
 	ensuring = $state(false);
 	ensured = $state(false);
 
-	users = $derived(this.data.current.users);
+	accounts = $derived(this.data.current.accounts);
 	activeUsername = $derived(this.data.current.activeUsername);
 
 	activeAccount = $derived.by(() => {
 		const username = this.activeUsername;
 		if (!username) return null;
-		return this.users.find((u) => u.username === username) ?? null;
+		return this.accounts.find((u) => u.username === username) ?? null;
 	});
 
 	authArgs = $derived.by(() => {
@@ -41,34 +41,35 @@ export class UserManager {
 		};
 	});
 
-	async ensureUser(convex: ConvexClient) {
+	async ensureAccount(convex: ConvexClient) {
 		this.ensuring = true;
 		this.ensured = false;
 
 		if (this.activeAccount) {
-			const isValid = await this.isValidUser(convex);
+			const isValid = await this.isValidAccount(convex);
 			if (isValid) {
 				this.ensuring = false;
 				this.ensured = true;
 				return;
 			}
 			this.data.current = {
-				users: this.users.filter((u) => u.username !== this.activeUsername),
-				activeUsername: this.users.find((u) => u.username !== this.activeUsername)?.username ?? null
+				accounts: this.accounts.filter((u) => u.username !== this.activeUsername),
+				activeUsername:
+					this.accounts.find((u) => u.username !== this.activeUsername)?.username ?? null
 			};
 		}
 
-		if (this.users.length === 0) {
-			await this.createNewUser(convex);
+		if (this.accounts.length === 0) {
+			await this.createNewAccount(convex);
 		} else {
-			await this.switchToUser(this.users[0].username);
-			const isValid = await this.isValidUser(convex);
+			await this.switchToAccount(this.accounts[0].username);
+			const isValid = await this.isValidAccount(convex);
 			if (!isValid) {
 				this.data.current = {
-					users: this.users.filter((u) => u.username !== this.activeUsername),
+					accounts: this.accounts.filter((u) => u.username !== this.activeUsername),
 					activeUsername: null
 				};
-				await this.ensureUser(convex);
+				await this.ensureAccount(convex);
 			}
 		}
 
@@ -76,62 +77,62 @@ export class UserManager {
 		this.ensured = true;
 	}
 
-	private async isValidUser(convex: ConvexClient): Promise<boolean> {
+	private async isValidAccount(convex: ConvexClient): Promise<boolean> {
 		const account = this.activeAccount;
 		if (!account) return false;
 		try {
-			await convex.query(api.users.get, {
+			await convex.query(api.accounts.get, {
 				username: account.username,
 				token: account.token
 			});
 			return true;
 		} catch (e) {
-			console.warn('User validation failed', e);
+			console.warn('Account validation failed', e);
 			return false;
 		}
 	}
 
-	async createNewUser(convex: ConvexClient, customUsername?: string) {
+	async createNewAccount(convex: ConvexClient, customUsername?: string) {
 		this.creating = true;
 		const username = customUsername ?? generateRandomUsername();
-		const result = await convex.mutation(api.users.create, { username });
-		const newUser: UserAccount = {
+		const result = await convex.mutation(api.accounts.create, { username });
+		const newAccount: Account = {
 			username: result.username,
 			token: result.token
 		};
 		this.data.current = {
-			users: [...this.users, newUser],
-			activeUsername: newUser.username
+			accounts: [...this.accounts, newAccount],
+			activeUsername: newAccount.username
 		};
 		this.creating = false;
-		return newUser;
+		return newAccount;
 	}
 
-	async addExistingUser(convex: ConvexClient, username: string, token: string) {
+	async addExistingAccount(convex: ConvexClient, username: string, token: string) {
 		this.creating = true;
 		try {
-			await convex.query(api.users.get, { username, token });
+			await convex.query(api.accounts.get, { username, token });
 		} catch {
 			this.creating = false;
 			throw new Error('Invalid username or token');
 		}
-		const existingUser: UserAccount = { username, token };
-		if (this.users.find((u) => u.username === username)) {
+		const existingAccount: Account = { username, token };
+		if (this.accounts.find((u) => u.username === username)) {
 			this.creating = false;
-			throw new Error('User already exists');
+			throw new Error('Account already exists');
 		}
 		this.data.current = {
-			users: [...this.users, existingUser],
+			accounts: [...this.accounts, existingAccount],
 			activeUsername: username
 		};
 		this.creating = false;
-		return existingUser;
+		return existingAccount;
 	}
 
-	async switchToUser(username: string) {
-		const user = this.users.find((u) => u.username === username);
-		if (!user) {
-			throw new Error('User not found');
+	async switchToAccount(username: string) {
+		const account = this.accounts.find((u) => u.username === username);
+		if (!account) {
+			throw new Error('Account not found');
 		}
 		this.data.current = {
 			...this.data.current,
@@ -139,47 +140,47 @@ export class UserManager {
 		};
 	}
 
-	async removeUser(convex: ConvexClient, username: string) {
-		const user = this.users.find((u) => u.username === username);
-		if (!user) {
-			throw new Error('User not found');
+	async removeAccount(convex: ConvexClient, username: string) {
+		const account = this.accounts.find((u) => u.username === username);
+		if (!account) {
+			throw new Error('Account not found');
 		}
 
-		await convex.mutation(api.users.deleteUser, {
-			username: user.username,
-			token: user.token
+		await convex.mutation(api.accounts.deleteUser, {
+			username: account.username,
+			token: account.token
 		});
 
-		const newUsers = this.users.filter((u) => u.username !== username);
+		const newAccounts = this.accounts.filter((u) => u.username !== username);
 		const newActive =
-			this.activeUsername === username ? (newUsers[0]?.username ?? null) : this.activeUsername;
+			this.activeUsername === username ? (newAccounts[0]?.username ?? null) : this.activeUsername;
 		this.data.current = {
-			users: newUsers,
+			accounts: newAccounts,
 			activeUsername: newActive
 		};
 	}
 
 	async updateUsername(convex: ConvexClient, oldUsername: string, newUsername: string) {
-		const token = this.users.find((u) => u.username === oldUsername)?.token ?? '';
-		await convex.mutation(api.users.updateUsername, {
+		const token = this.accounts.find((u) => u.username === oldUsername)?.token ?? '';
+		await convex.mutation(api.accounts.updateUsername, {
 			username: oldUsername,
 			token: token,
 			newUsername: newUsername
 		});
 
-		const user = this.users.find((u) => u.username === oldUsername);
-		if (!user) return;
+		const account = this.accounts.find((u) => u.username === oldUsername);
+		if (!account) return;
 
-		const newUsers = this.users.map((u) =>
+		const newAccounts = this.accounts.map((u) =>
 			u.username === oldUsername ? { ...u, username: newUsername } : u
 		);
 		const newActive = this.activeUsername === oldUsername ? newUsername : this.activeUsername;
 
 		this.data.current = {
-			users: newUsers,
+			accounts: newAccounts,
 			activeUsername: newActive
 		};
 	}
 }
 
-export const userManager = new UserManager();
+export const accountManager = new AccountManager();
