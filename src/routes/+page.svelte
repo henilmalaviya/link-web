@@ -75,6 +75,7 @@
 <div class="flex grow flex-col gap-6 px-3 py-4 sm:py-6">
 	<!-- Control Bar -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<!-- Desktop: Filter and Display buttons on the left -->
 		<div class="hidden items-center gap-2 sm:flex">
 			<Button variant="outline" size="sm" disabled>
 				<Filter class="mr-2 h-4 w-4" />
@@ -88,6 +89,58 @@
 					</Button>
 				</Popover.Trigger>
 				<Popover.Content align="start" class="w-80">
+					<div class="flex items-center justify-between gap-3">
+						<div class="flex items-center gap-2 text-sm">
+							<ArrowUpDown class="h-4 w-4" />
+							<span>Ordering</span>
+						</div>
+						<Select.Root type="single" bind:value={orderBy}>
+							<Select.Trigger class="w-fit">
+								<span
+									>{orderBy === 'newest'
+										? 'Newest first'
+										: orderBy === 'oldest'
+											? 'Oldest first'
+											: orderBy === 'most_clicks'
+												? 'Most clicks'
+												: 'Least clicks'}</span
+								>
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Item value="newest">
+									<ArrowDown class="mr-2 inline h-4 w-4" />
+									Newest first
+								</Select.Item>
+								<Select.Item value="oldest">
+									<ArrowUp class="mr-2 inline h-4 w-4" />
+									Oldest first
+								</Select.Item>
+								<Select.Item value="most_clicks">
+									<BarChart3 class="mr-2 inline h-4 w-4" />
+									Most clicks
+								</Select.Item>
+								<Select.Item value="least_clicks">
+									<ArrowUpDown class="mr-2 inline h-4 w-4" />
+									Least clicks
+								</Select.Item>
+							</Select.Content>
+						</Select.Root>
+					</div>
+				</Popover.Content>
+			</Popover.Root>
+		</div>
+		<!-- Mobile: Filter and Display buttons as icons on the right of search -->
+		<div class="flex items-center gap-2 sm:hidden">
+			<Button variant="outline" size="icon" disabled>
+				<Filter class="h-4 w-4" />
+			</Button>
+			<Popover.Root bind:open={displayPopoverOpen}>
+				<Popover.Trigger>
+					<Button variant="outline" size="icon">
+						<LayoutGrid class="h-4 w-4" />
+					</Button>
+				</Popover.Trigger>
+				<Popover.Content align="end" class="w-80">
 					<div class="flex items-center justify-between gap-3">
 						<div class="flex items-center gap-2 text-sm">
 							<ArrowUpDown class="h-4 w-4" />
