@@ -1,4 +1,4 @@
-import { DateTime, DateTimeUnit } from 'luxon';
+import { DateTime, type DateTimeUnit } from 'luxon';
 
 export interface TimeSeriesParams<T, R> {
 	data: T[];

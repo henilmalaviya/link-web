@@ -1,18 +1,17 @@
 import { useQuery } from 'convex-svelte';
 import { api } from '$convex/_generated/api';
-import { user } from '$lib/state/user.svelte';
+import { userManager } from '$lib/state/userManager.svelte';
 import { globalState } from '$lib/state/global.svelte';
-import type { Id } from '$convex/_generated/dataModel';
 
 export function useLink(shortIdGetter: () => string) {
 	const linkResult = useQuery(api.links.getByShortId, () => {
 		const shortId = shortIdGetter();
-		if (!globalState.hydrated || !user.data.current || !shortId) {
+		if (!globalState.hydrated || !userManager.activeAccount || !shortId) {
 			return 'skip';
 		}
 		return {
-			userId: user.data.current.id as Id<'users'>,
-			token: user.data.current.token,
+			username: userManager.activeAccount.username,
+			token: userManager.activeAccount.token,
 			shortId
 		};
 	});

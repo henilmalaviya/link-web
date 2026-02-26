@@ -6,7 +6,7 @@
 	import { api } from '$convex/_generated/api';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { globalState } from '$lib/state/global.svelte';
-	import { user } from '$lib/state/user.svelte';
+	import { userManager } from '$lib/state/userManager.svelte';
 	import ChartContainer from '$lib/components/ui/chart/chart-container.svelte';
 	import ChartTooltip from '$lib/components/ui/chart/chart-tooltip.svelte';
 
@@ -16,11 +16,13 @@
 	const timeSeriesResult = useQuery(
 		api.analytics.timeSeriesByShortId,
 		() => {
-			if (!globalState.hydrated || !user.authArgs || !shortId) {
+			const auth = userManager.authArgs;
+			if (!globalState.hydrated || !auth || !shortId) {
 				return 'skip';
 			}
 			return {
-				...user.authArgs,
+				username: auth.username,
+				token: auth.token,
 				shortId,
 				timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 				start: startTime,

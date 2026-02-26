@@ -3,7 +3,8 @@
 	import { Kbd } from '$lib/components/ui/kbd/index.js';
 	import { Link, Loader } from '@lucide/svelte';
 	import CreateLink from '$lib/components/CreateLink.svelte';
-	import { user } from '$lib/state/user.svelte';
+	import UserSwitcher from '$lib/components/UserSwitcher.svelte';
+	import { userManager } from '$lib/state/userManager.svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { globalState } from '$lib/state/global.svelte';
 
@@ -23,16 +24,15 @@
 			<span class="text-lg font-bold">Link</span>
 		</a>
 
-		<div class="flex items-center gap-4">
-			<!-- Create Link Button -->
+		<div class="flex items-center gap-2">
 			<CreateLink>
 				<Button
 					size="default"
 					hotkey="c"
 					hotkeyEnabled={!isMobile.current}
-					disabled={user.ensuring || !globalState.hydrated}
+					disabled={userManager.ensuring || !globalState.hydrated}
 				>
-					{#if user.ensuring || !globalState.hydrated}
+					{#if userManager.ensuring || !globalState.hydrated}
 						<Loader class="h-4 w-4 animate-spin" />
 					{/if}
 					Create link
@@ -41,6 +41,7 @@
 					{/if}
 				</Button>
 			</CreateLink>
+			<UserSwitcher />
 		</div>
 	</div>
 </header>

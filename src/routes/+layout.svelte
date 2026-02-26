@@ -5,7 +5,7 @@
 	import { PUBLIC_CONVEX_URL } from '$env/static/public';
 	import { setupConvex, useConvexClient } from 'convex-svelte';
 	import { onMount } from 'svelte';
-	import { user } from '$lib/state/user.svelte';
+	import { userManager } from '$lib/state/userManager.svelte';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { Toaster } from '$lib/components/ui/sonner';
 
@@ -13,11 +13,10 @@
 
 	let { children } = $props();
 
-	// Get convex client synchronously during component initialization
 	const convex = useConvexClient();
 
 	onMount(async () => {
-		await user.ensureUser(convex);
+		await userManager.ensureUser(convex);
 	});
 </script>
 

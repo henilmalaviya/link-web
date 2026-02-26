@@ -2,7 +2,7 @@ import { v } from 'convex/values';
 import type { Doc } from './_generated/dataModel';
 import type { QueryCtx } from './_generated/server';
 import { protectedShortIdQuery } from './users';
-import { DateTime, DateTimeUnit, Duration } from 'luxon';
+import { DateTime, type DateTimeUnit, Duration } from 'luxon';
 import { createTimeSeriesBuckets } from './utils/timeSeries';
 
 // 1. Define exactly what time units are valid for your chart

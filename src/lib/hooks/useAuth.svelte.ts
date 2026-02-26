@@ -1,18 +1,17 @@
-import { user } from '$lib/state/user.svelte';
+import { userManager } from '$lib/state/userManager.svelte';
 import { globalState } from '$lib/state/global.svelte';
-import type { Id } from '$convex/_generated/dataModel';
 
 export type AuthArgs = {
-	userId: Id<'users'>;
+	username: string;
 	token: string;
 };
 
 export function getAuthArgs(): AuthArgs | 'skip' {
-	if (!globalState.hydrated || !user.data.current) {
+	if (!globalState.hydrated || !userManager.activeAccount) {
 		return 'skip';
 	}
 	return {
-		userId: user.data.current.id as Id<'users'>,
-		token: user.data.current.token
+		username: userManager.activeAccount.username,
+		token: userManager.activeAccount.token
 	};
 }

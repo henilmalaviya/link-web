@@ -5,7 +5,6 @@ import { customMutation, customQuery } from 'convex-helpers/server/customFunctio
 import { hash, randomBase62Id } from './crypto';
 import type { Doc, Id } from './_generated/dataModel';
 
-// Public query and mutation helpers
 export const publicQuery = customQuery(query, {
 	args: {},
 	input: async (ctx, data) => {
@@ -26,19 +25,20 @@ export const publicMutation = customMutation(mutation, {
 	}
 });
 
-/* -------------------------------------------------------------------------- */
-// HELPERS
 export async function authorizeUser(
 	ctx: QueryCtx | MutationCtx,
 	args: {
-		userId: Id<'users'>;
+		username: string;
 		token: string;
 	}
 ): Promise<Doc<'users'>> {
-	const { userId, token } = args;
+	const { username, token } = args;
 
 	const tokenHash = await hash(token);
-	const user = await ctx.db.get('users', userId);
+	const user = await ctx.db
+		.query('users')
+		.withIndex('byUsername', (q) => q.eq('username', username))
+		.first();
 
 	if (!user || user.tokenHash !== tokenHash) {
 		throw new Error('Unauthorized');
@@ -47,11 +47,9 @@ export async function authorizeUser(
 	return user;
 }
 
-/* -------------------------------------------------------------------------- */
-// MIDDLEWARES
 export const protectedUserQuery = customQuery(query, {
 	args: {
-		userId: v.id('users'),
+		username: v.string(),
 		token: v.string()
 	},
 	input: async (ctx, data) => {
@@ -70,7 +68,7 @@ export const protectedUserQuery = customQuery(query, {
 
 export const protectedUserMutation = customMutation(mutation, {
 	args: {
-		userId: v.id('users'),
+		username: v.string(),
 		token: v.string()
 	},
 	input: async (ctx, data) => {
@@ -89,7 +87,7 @@ export const protectedUserMutation = customMutation(mutation, {
 
 export const protectedShortIdQuery = customQuery(query, {
 	args: {
-		userId: v.id('users'),
+		username: v.string(),
 		token: v.string(),
 		shortId: v.string()
 	},
@@ -121,7 +119,7 @@ export const protectedShortIdQuery = customQuery(query, {
 
 export const protectedShortIdMutation = customMutation(mutation, {
 	args: {
-		userId: v.id('users'),
+		username: v.string(),
 		token: v.string(),
 		shortId: v.string()
 	},
@@ -151,22 +149,32 @@ export const protectedShortIdMutation = customMutation(mutation, {
 	}
 });
 
-/* -------------------------------------------------------------------------- */
-// PUBLIC FUNCTIONS
-
 export const create = mutation({
-	handler: async (ctx) => {
-		const token = randomBase62Id(32);
+	args: {
+		username: v.string()
+	},
+	handler: async (ctx, args) => {
+		const existing = await ctx.db
+			.query('users')
+			.withIndex('byUsername', (q) => q.eq('username', args.username))
+			.first();
 
+		if (existing) {
+			throw new ConvexError({ code: 'USERNAME_TAKEN', message: 'Username already taken' });
+		}
+
+		const token = randomBase62Id(32);
 		const tokenHash = await hash(token);
 
 		const userId = await ctx.db.insert('users', {
-			tokenHash
+			tokenHash,
+			username: args.username
 		});
 
 		return {
 			id: userId,
-			token
+			token,
+			username: args.username
 		};
 	}
 });
@@ -176,7 +184,59 @@ export const get = protectedUserQuery({
 	handler: async (ctx) => {
 		return {
 			id: ctx.user._id,
+			username: ctx.user.username,
 			createdAt: ctx.user._creationTime
 		};
+	}
+});
+
+export const updateUsername = protectedUserMutation({
+	args: {
+		newUsername: v.string()
+	},
+	handler: async (ctx, args) => {
+		const existing = await ctx.db
+			.query('users')
+			.withIndex('byUsername', (q) => q.eq('username', args.newUsername))
+			.first();
+
+		if (existing && existing._id !== ctx.user._id) {
+			throw new ConvexError({ code: 'USERNAME_TAKEN', message: 'Username already taken' });
+		}
+
+		await ctx.db.patch(ctx.user._id, {
+			username: args.newUsername
+		});
+
+		return { success: true };
+	}
+});
+
+export const deleteUser = protectedUserMutation({
+	args: {},
+	handler: async (ctx) => {
+		const userId = ctx.user._id;
+
+		const links = await ctx.db
+			.query('links')
+			.withIndex('byOwnerId', (q) => q.eq('ownerId', userId))
+			.collect();
+
+		for (const link of links) {
+			const redirects = await ctx.db
+				.query('redirects')
+				.withIndex('byShortId', (q) => q.eq('shortId', link.shortId))
+				.collect();
+
+			for (const redirect of redirects) {
+				await ctx.db.delete(redirect._id);
+			}
+
+			await ctx.db.delete(link._id);
+		}
+
+		await ctx.db.delete(userId);
+
+		return { success: true };
 	}
 });

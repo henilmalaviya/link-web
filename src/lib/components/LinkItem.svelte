@@ -12,7 +12,7 @@
 	import { getErrorMessage } from '$lib/utils/error.js';
 	import { useLink } from '$lib/hooks/useLink.svelte';
 	import { globalState } from '$lib/state/global.svelte';
-	import { user } from '$lib/state/user.svelte';
+	import { userManager } from '$lib/state/userManager.svelte';
 
 	interface LinkData {
 		url: string;
@@ -50,11 +50,13 @@
 	const clicksResult = $derived.by(() => {
 		if (providedLink || providedError) return null;
 		return useQuery(api.analytics.totalClicksByShortId, () => {
-			if (!globalState.hydrated || !user.authArgs) {
+			const auth = userManager.authArgs;
+			if (!globalState.hydrated || !auth) {
 				return 'skip';
 			}
 			return {
-				...user.authArgs,
+				username: auth.username,
+				token: auth.token,
 				shortId
 			};
 		});
