@@ -4,7 +4,16 @@
 	import { api } from '$convex/_generated/api';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
-	import { Copy, CornerDownRight, MoreHorizontal, Sparkles, ExternalLink } from '@lucide/svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import {
+		Copy,
+		CornerDownRight,
+		EllipsisVertical,
+		Sparkles,
+		ExternalLink,
+		Pencil,
+		Trash2
+	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { copyToClipboard } from '$lib/utils/clipboard';
 	import { getFavicon, getHostname } from '$lib/utils/url.js';
@@ -13,6 +22,8 @@
 	import { useLink } from '$lib/hooks/useLink.svelte';
 	import { globalState } from '$lib/state/global.svelte';
 	import { userManager } from '$lib/state/userManager.svelte';
+	import DeleteLinkDialog from './LinkItem/DeleteLinkDialog.svelte';
+	import EditLinkDialog from './LinkItem/EditLinkDialog.svelte';
 
 	interface LinkData {
 		url: string;
@@ -88,6 +99,17 @@
 			toast.error('Failed to copy short link');
 		}
 	};
+
+	let editDialogOpen = $state(false);
+	let deleteDialogOpen = $state(false);
+
+	const handleLinkDeleted = () => {
+		deleteDialogOpen = false;
+	};
+
+	const handleLinkUpdated = () => {
+		editDialogOpen = false;
+	};
 </script>
 
 {#if isLoading}
@@ -121,7 +143,7 @@
 				<span>{getErrorMessage(error, 'Unable to load link.')}</span>
 			</div>
 			<Button variant="ghost" size="icon-sm">
-				<MoreHorizontal class="h-4 w-4" />
+				<EllipsisVertical class="h-4 w-4" />
 			</Button>
 		</div>
 	{/if}
@@ -174,21 +196,44 @@
 					</div>
 				</div>
 			</div>
-			{#if trailing}
-				{@render trailing(clicks)}
-			{:else if clicks !== undefined}
-				<div class="flex shrink-0 items-center gap-2">
-					<div
-						class="flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600 tabular-nums {clicks >
-						0
-							? 'text-sky-700'
-							: ''}"
-					>
-						<Sparkles class="h-3.5 w-3.5" />
-						<span>{clicks}</span>
-					</div>
-				</div>
-			{/if}
+			<div class="flex gap-2">
+				{#if trailing}
+					{@render trailing(clicks)}
+				{/if}
+				<DropdownMenu.Root>
+					<DropdownMenu.Trigger>
+						<Button variant="ghost" size="icon-sm">
+							<EllipsisVertical class="h-4 w-4" />
+						</Button>
+					</DropdownMenu.Trigger>
+					<DropdownMenu.Content class="w-32">
+						<DropdownMenu.Item onclick={() => (editDialogOpen = true)}>
+							<Pencil class="mr-2 h-4 w-4" />
+							Edit
+						</DropdownMenu.Item>
+						<DropdownMenu.Item
+							onclick={() => (deleteDialogOpen = true)}
+							class="text-destructive focus:text-destructive"
+						>
+							<Trash2 class="mr-2 h-4 w-4" />
+							Delete
+						</DropdownMenu.Item>
+					</DropdownMenu.Content>
+				</DropdownMenu.Root>
+			</div>
 		</div>
 	</div>
 {/if}
+
+<EditLinkDialog
+	bind:open={editDialogOpen}
+	{shortId}
+	currentUrl={link?.url ?? ''}
+	onSuccess={handleLinkUpdated}
+/>
+<DeleteLinkDialog
+	bind:open={deleteDialogOpen}
+	{shortId}
+	url={link?.url ?? ''}
+	onSuccess={handleLinkDeleted}
+/>

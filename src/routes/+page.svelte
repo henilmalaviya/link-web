@@ -85,9 +85,6 @@
 									<span>{clicks}</span>
 								</a>
 							{/if}
-							<Button variant="ghost" size="sm" class="h-7 w-7 p-0">
-								<MoreHorizontal class="h-4 w-4" />
-							</Button>
 						</div>
 					{/snippet}
 				</LinkItem>

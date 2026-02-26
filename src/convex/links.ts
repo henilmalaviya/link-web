@@ -4,6 +4,7 @@ import {
 	protectedUserMutation,
 	protectedUserQuery,
 	protectedShortIdQuery,
+	protectedShortIdMutation,
 	publicQuery
 } from './users';
 import { randomBase62Id } from './crypto';
@@ -113,5 +114,32 @@ export const getByShortId = protectedShortIdQuery({
 	args: {},
 	handler: async (ctx) => {
 		return ctx.link;
+	}
+});
+
+export const update = protectedShortIdMutation({
+	args: { url: linkSchema.url },
+	handler: async (ctx, { url }) => {
+		await ctx.db.patch(ctx.link._id, { url });
+		return { ok: true };
+	}
+});
+
+export const deleteLink = protectedShortIdMutation({
+	args: {},
+	handler: async (ctx) => {
+		const link = ctx.link;
+
+		const redirects = await ctx.db
+			.query('redirects')
+			.withIndex('byShortId', (q) => q.eq('shortId', link.shortId))
+			.collect();
+
+		for (const redirect of redirects) {
+			await ctx.db.delete(redirect._id);
+		}
+
+		await ctx.db.delete(link._id);
+		return { ok: true };
 	}
 });
