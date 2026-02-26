@@ -48,7 +48,7 @@
 				<DrawerTitle>Display Options</DrawerTitle>
 				<DrawerDescription>Choose how to order your links.</DrawerDescription>
 			</DrawerHeader>
-			<div class="px-4">
+			<div class="mt-2 px-4">
 				<div class="flex items-center justify-between gap-3">
 					<div class="flex items-center gap-2 text-sm">
 						<ArrowUpDown class="h-4 w-4" />
