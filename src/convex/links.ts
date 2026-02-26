@@ -98,15 +98,68 @@ export const generateShortId = protectedUserMutation({
 });
 
 export const listShortIdsByUser = protectedUserQuery({
-	args: {},
-	handler: async (ctx) => {
-		const links = await ctx.db
+	args: {
+		search: v.optional(v.string()),
+		orderBy: v.optional(
+			v.union(
+				v.literal('newest'),
+				v.literal('oldest'),
+				v.literal('most_clicks'),
+				v.literal('least_clicks')
+			)
+		),
+		limit: v.optional(v.number()),
+		skip: v.optional(v.number())
+	},
+	handler: async (ctx, args) => {
+		const search = args.search?.toLowerCase();
+		const orderBy = args.orderBy ?? 'newest';
+		const limit = args.limit ?? 10;
+		const skip = args.skip ?? 0;
+
+		let links = await ctx.db
 			.query('links')
 			.withIndex('byOwnerId', (q) => q.eq('ownerId', ctx.user._id))
-			.order('desc')
 			.collect();
 
-		return links.map((link) => ({ shortId: link.shortId }));
+		if (search) {
+			links = links.filter(
+				(link) =>
+					link.shortId.toLowerCase().includes(search) || link.url.toLowerCase().includes(search)
+			);
+		}
+
+		const total = links.length;
+
+		if (orderBy === 'newest') {
+			links.sort((a, b) => (b._creationTime ?? 0) - (a._creationTime ?? 0));
+		} else if (orderBy === 'oldest') {
+			links.sort((a, b) => (a._creationTime ?? 0) - (b._creationTime ?? 0));
+		} else if (orderBy === 'most_clicks' || orderBy === 'least_clicks') {
+			const shortIds = links.map((l) => l.shortId);
+			const clickCounts: Record<string, number> = {};
+
+			for (const shortId of shortIds) {
+				const redirects = await ctx.db
+					.query('redirects')
+					.withIndex('byShortId', (q) => q.eq('shortId', shortId))
+					.collect();
+				clickCounts[shortId] = redirects.length;
+			}
+
+			links.sort((a, b) => {
+				const countA = clickCounts[a.shortId] ?? 0;
+				const countB = clickCounts[b.shortId] ?? 0;
+				return orderBy === 'most_clicks' ? countB - countA : countA - countB;
+			});
+		}
+
+		const paginatedLinks = links.slice(skip, skip + limit);
+
+		return {
+			links: paginatedLinks.map((link) => ({ shortId: link.shortId })),
+			total
+		};
 	}
 });
 
