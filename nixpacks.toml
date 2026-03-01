@@ -6,8 +6,8 @@ cmds = ["bun install"]
 dependsOn = ["setup"]
 
 [phases.build]
-cmds = ["bun run build"]
+cmds = ["bunx convex deploy --cmd 'bun run build'"]
 dependsOn = ["install"]
 
 [start]
-cmd = "bun run preview"
+cmd = "bun run build/index.js"
