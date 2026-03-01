@@ -12,6 +12,7 @@
 	import Navbar from '$lib/components/Navbar.svelte';
 	import AccountSwitcher from '$lib/components/AccountSwitcher.svelte';
 	import { Toaster } from '$lib/components/ui/sonner';
+	import { page } from '$app/state';
 
 	setupConvex(PUBLIC_CONVEX_URL);
 
@@ -41,7 +42,9 @@
 </svelte:head>
 
 <div class="mx-auto flex min-h-screen w-full max-w-4xl flex-col">
-	<Navbar />
+	{#if page.status !== 404}
+		<Navbar />
+	{/if}
 	{#if !isHydrated}
 		<div class="flex flex-1 items-center justify-center p-6">
 			<Loader class="h-5 w-5 animate-spin text-muted-foreground" />
