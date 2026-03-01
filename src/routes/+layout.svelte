@@ -42,7 +42,7 @@
 </svelte:head>
 
 <div class="mx-auto flex min-h-screen w-full max-w-4xl flex-col">
-	{#if page.status !== 404}
+	{#if page.status !== 404 && page.status !== 410}
 		<Navbar />
 	{/if}
 	{#if !isHydrated}
