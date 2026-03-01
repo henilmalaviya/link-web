@@ -86,10 +86,11 @@ export const findByShortId = publicQuery({
 export const create = protectedAccountMutation({
 	args: {
 		url: linkSchema.url,
-		shortId: v.optional(linkSchema.shortId)
+		shortId: v.optional(linkSchema.shortId),
+		tags: v.optional(v.array(v.string()))
 	},
 	handler: async (ctx, data) => {
-		const { url, shortId } = data;
+		const { url, shortId, tags } = data;
 
 		validateUrl(url);
 
@@ -107,13 +108,15 @@ export const create = protectedAccountMutation({
 			url,
 			shortId: finalShortId,
 			clickCount: 0,
-			ownerId: ctx.account._id
+			ownerId: ctx.account._id,
+			tags: tags ?? []
 		});
 
 		return {
 			id: linkId,
 			url: url,
-			shortId: finalShortId
+			shortId: finalShortId,
+			tags: tags ?? []
 		};
 	}
 });
@@ -128,6 +131,7 @@ export const generateShortId = protectedAccountMutation({
 export const listShortIdsByUser = protectedAccountQuery({
 	args: {
 		search: v.optional(v.string()),
+		tag: v.optional(v.string()),
 		orderBy: v.optional(
 			v.union(
 				v.literal('newest'),
@@ -142,6 +146,7 @@ export const listShortIdsByUser = protectedAccountQuery({
 	},
 	handler: async (ctx, args) => {
 		const search = args.search?.toLowerCase();
+		const tag = args.tag;
 		const orderBy = args.orderBy ?? 'newest';
 		const limit = args.limit ?? 10;
 		const skip = args.skip ?? 0;
@@ -154,7 +159,7 @@ export const listShortIdsByUser = protectedAccountQuery({
 			.query('links')
 			.withIndex('byOwnerId', (q) => q.eq('ownerId', ctx.account._id));
 
-		if (isTimeOrder && !search) {
+		if (isTimeOrder && !search && !tag) {
 			// @ts-expect-error Convex allows order on indexed queries
 			query = query.order(orderBy === 'newest' ? 'desc' : 'asc');
 		}
@@ -168,9 +173,13 @@ export const listShortIdsByUser = protectedAccountQuery({
 			);
 		}
 
+		if (tag) {
+			links = links.filter((link) => (link.tags ?? []).includes(tag));
+		}
+
 		const total = links.length;
 
-		if (isTimeOrder && search) {
+		if (isTimeOrder && (search || tag)) {
 			links.sort((a, b) => {
 				const aTime = a._creationTime ?? 0;
 				const bTime = b._creationTime ?? 0;
@@ -193,9 +202,26 @@ export const listShortIdsByUser = protectedAccountQuery({
 		const paginatedLinks = links.slice(skip, skip + limit);
 
 		return {
-			links: paginatedLinks.map((link) => ({ shortId: link.shortId, clickCount: link.clickCount })),
+			links: paginatedLinks.map((link) => ({
+				shortId: link.shortId,
+				clickCount: link.clickCount,
+				tags: link.tags ?? []
+			})),
 			total
 		};
+	}
+});
+
+export const getTagsByUser = protectedAccountQuery({
+	args: {},
+	handler: async (ctx) => {
+		const links = await ctx.db
+			.query('links')
+			.withIndex('byOwnerId', (q) => q.eq('ownerId', ctx.account._id))
+			.collect();
+
+		const allTags = links.flatMap((link) => link.tags ?? []);
+		return Array.from(new Set(allTags)).sort();
 	}
 });
 
@@ -207,10 +233,28 @@ export const getByShortId = protectedShortIdQuery({
 });
 
 export const update = protectedShortIdMutation({
-	args: { url: linkSchema.url },
-	handler: async (ctx, { url }) => {
-		validateUrl(url);
-		await ctx.db.patch(ctx.link._id, { url });
+	args: {
+		url: v.optional(linkSchema.url),
+		tags: v.optional(v.array(v.string()))
+	},
+	handler: async (ctx, data) => {
+		const { url, tags } = data;
+
+		const updates: Record<string, unknown> = {};
+
+		if (url !== undefined) {
+			validateUrl(url);
+			updates.url = url;
+		}
+
+		if (tags !== undefined) {
+			updates.tags = tags;
+		}
+
+		if (Object.keys(updates).length > 0) {
+			await ctx.db.patch(ctx.link._id, updates);
+		}
+
 		return { ok: true };
 	}
 });

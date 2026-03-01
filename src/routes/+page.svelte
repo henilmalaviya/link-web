@@ -4,6 +4,7 @@
 	import { getErrorMessage } from '$lib/utils/error.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import {
 		Search,
 		Filter,
@@ -12,22 +13,25 @@
 		MousePointerClick,
 		ChevronLeft,
 		ChevronRight,
-		ChartArea
+		ChartArea,
+		X
 	} from '@lucide/svelte';
 	import LinkItem from '$lib/components/LinkItem.svelte';
 	import { globalState } from '$lib/state/global.svelte';
 	import { account } from '$lib/state/account.svelte';
 	import { Debounced } from 'runed';
 	import DisplayOptions from '$lib/components/DisplayOptions.svelte';
+	import { getTagColor, getTagTextColor } from '$lib/utils/tags.js';
 
 	let search = $state('');
 	const debounced = new Debounced(() => search, 300);
 	let orderBy = $state<'newest' | 'oldest' | 'most_clicks' | 'least_clicks'>('newest');
 	let currentPage = $state(1);
+	let selectedTag = $state<string | undefined>(undefined);
 	const limit = 10;
 
 	$effect(() => {
-		if (search) {
+		if (search || selectedTag) {
 			currentPage = 1;
 		}
 	});
@@ -39,15 +43,29 @@
 		return {
 			...account.authArgs,
 			search: debounced.current || undefined,
+			tag: selectedTag,
 			orderBy,
 			limit,
 			skip: (currentPage - 1) * limit
 		};
 	});
 
+	const tagsResult = useQuery(api.links.getTagsByUser, () => {
+		if (!globalState.hydrated || !account.authArgs) {
+			return 'skip';
+		}
+		return account.authArgs;
+	});
+
 	const links = $derived(
-		(linksResult.data?.links ?? []).map((link: { shortId: string }) => link.shortId)
+		(linksResult.data?.links ?? []).map((link) => ({
+			shortId: link.shortId,
+			tags: link.tags ?? []
+		}))
 	);
+
+	const allTags = $derived(tagsResult.data ?? []);
+
 	const totalLinks = $derived(linksResult.data?.total ?? 0);
 	const totalPages = $derived(Math.ceil(totalLinks / limit));
 	const showingFrom = $derived(totalLinks === 0 ? 0 : (currentPage - 1) * limit + 1);
@@ -57,6 +75,10 @@
 
 	const isFirstPage = $derived(currentPage <= 1);
 	const isLastPage = $derived(currentPage >= totalPages || totalPages === 0);
+
+	const handleTagChange = (value: string | undefined) => {
+		selectedTag = value;
+	};
 </script>
 
 <div class="flex grow flex-col gap-6 px-3 py-4 sm:py-6">
@@ -64,10 +86,29 @@
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<!-- Desktop: Filter and Display buttons on the left -->
 		<div class="hidden items-center gap-2 sm:flex">
-			<Button variant="outline" size="sm" disabled>
-				<Filter class="mr-2 h-4 w-4" />
-				Filter
-			</Button>
+			<Select.Root
+				type="single"
+				value={selectedTag ?? ''}
+				onValueChange={(v: string) => handleTagChange(v || undefined)}
+			>
+				<Select.Trigger class="w-36" disabled={loading}>
+					<span>{selectedTag ? selectedTag : 'Filter by tag'}</span>
+				</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="">All tags</Select.Item>
+					{#each allTags as tag}
+						<Select.Item value={tag}>
+							<span class="flex items-center gap-2">
+								<span
+									class="inline-block h-2 w-2 rounded-full"
+									style="background-color: {getTagColor(tag)}"
+								></span>
+								{tag}
+							</span>
+						</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
 			<DisplayOptions bind:orderBy />
 		</div>
 
@@ -83,9 +124,21 @@
 			</div>
 			<!-- Mobile: Filter and Display buttons as icons on the right of search -->
 			<div class="flex items-center gap-2 sm:hidden">
-				<Button variant="outline" size="icon" disabled>
-					<Filter class="h-4 w-4" />
-				</Button>
+				<Select.Root
+					type="single"
+					value={selectedTag ?? ''}
+					onValueChange={(v: string) => handleTagChange(v || undefined)}
+				>
+					<Select.Trigger class="w-28" disabled={loading}>
+						<span>{selectedTag ? selectedTag : 'Tag'}</span>
+					</Select.Trigger>
+					<Select.Content>
+						<Select.Item value="">All</Select.Item>
+						{#each allTags as tag}
+							<Select.Item value={tag}>{tag}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
 				<DisplayOptions bind:orderBy />
 			</div>
 		</div>
@@ -102,8 +155,8 @@
 	{:else}
 		<!-- Links List -->
 		<div class="flex flex-col gap-3">
-			{#each links as shortId (shortId)}
-				<LinkItem {shortId}>
+			{#each links as { shortId, tags } (shortId)}
+				<LinkItem {shortId} {tags}>
 					{#snippet trailing(clicks)}
 						<div class="flex min-w-0 shrink-0 items-center gap-2 overflow-hidden">
 							{#if clicks !== undefined}

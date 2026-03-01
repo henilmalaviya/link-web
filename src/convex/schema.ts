@@ -11,7 +11,8 @@ export const linkSchema = {
 	shortId: v.string(),
 	clickCount: v.number(),
 	ownerId: v.id('accounts'),
-	lastClickTime: v.optional(v.number())
+	lastClickTime: v.optional(v.number()),
+	tags: v.optional(v.array(v.string()))
 };
 
 export const redirectSchema = {

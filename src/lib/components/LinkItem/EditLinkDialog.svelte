@@ -25,20 +25,26 @@
 	import { getErrorMessage } from '$lib/utils/error.js';
 	import { accountManager } from '$lib/state/accountManager.svelte';
 	import { globalState } from '$lib/state/global.svelte';
+	import { getTagColor, getTagTextColor } from '$lib/utils/tags.js';
+	import { X } from '@lucide/svelte';
 
 	let {
 		open = $bindable(),
 		shortId,
 		currentUrl,
+		currentTags = [],
 		onSuccess
 	}: {
 		open: boolean;
 		shortId: string;
 		currentUrl: string;
+		currentTags?: string[];
 		onSuccess?: () => void;
 	} = $props();
 
 	let newUrl = $state('');
+	let tags = $state<string[]>([]);
+	let tagInput = $state('');
 	let errorMessage = $state('');
 	let isSubmitting = $state(false);
 
@@ -49,6 +55,7 @@
 	$effect(() => {
 		if (open && currentUrl) {
 			newUrl = currentUrl;
+			tags = [...currentTags];
 		}
 	});
 
@@ -69,11 +76,6 @@
 			return;
 		}
 
-		if (trimmedUrl === currentUrl) {
-			open = false;
-			return;
-		}
-
 		const auth = accountManager.authArgs;
 		if (!auth) {
 			errorMessage = 'Not authenticated';
@@ -84,7 +86,21 @@
 		errorMessage = '';
 
 		try {
-			await convex.mutation(api.links.update, { ...auth, shortId, url: trimmedUrl });
+			const mutationArgs = {
+				shortId,
+				username: auth.username,
+				token: auth.token
+			};
+
+			if (trimmedUrl !== currentUrl) {
+				(mutationArgs as { url?: string }).url = trimmedUrl;
+			}
+
+			if (JSON.stringify(tags) !== JSON.stringify(currentTags)) {
+				(mutationArgs as { tags?: string[] }).tags = tags;
+			}
+
+			await convex.mutation(api.links.update, mutationArgs);
 			toast.success('Link updated');
 			onSuccess?.();
 			resetForm();
@@ -97,6 +113,8 @@
 
 	const resetForm = () => {
 		newUrl = '';
+		tags = [];
+		tagInput = '';
 		errorMessage = '';
 	};
 
@@ -132,6 +150,47 @@
 						bind:value={newUrl}
 					/>
 				</div>
+				<div class="grid gap-2">
+					<Label for="edit-tags">Tags</Label>
+					<div class="flex flex-wrap gap-2 rounded-md border border-input bg-background px-3 py-2">
+						{#each tags as tag (tag)}
+							<span
+								class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
+								style="background-color: {getTagColor(tag)}; color: {getTagTextColor(tag)}"
+							>
+								{tag}
+								<button
+									type="button"
+									class="ml-0.5 inline-flex h-3 w-3 items-center justify-center rounded-full hover:bg-black/10"
+									onclick={() => {
+										tags = tags.filter((t) => t !== tag);
+									}}
+								>
+									<X class="h-2.5 w-2.5" />
+								</button>
+							</span>
+						{/each}
+						<input
+							id="edit-tags"
+							class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+							placeholder={tags.length === 0 ? 'Add tags (press Enter or Space)' : ''}
+							bind:value={tagInput}
+							onkeydown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									const trimmed = tagInput.trim().toLowerCase();
+									const validTag = trimmed.replace(/[^a-z0-9_\-/]/g, '');
+									if (validTag && !tags.includes(validTag)) {
+										tags = [...tags, validTag];
+									}
+									tagInput = '';
+								} else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
+									tags = tags.slice(0, -1);
+								}
+							}}
+						/>
+					</div>
+				</div>
 				{#if errorMessage}
 					<p class="text-sm text-destructive">{errorMessage}</p>
 				{/if}
@@ -166,14 +225,55 @@
 				}}
 			>
 				<div class="grid gap-2">
-					<Label for="edit-url">Destination URL</Label>
+					<Label for="edit-url-dialog">Destination URL</Label>
 					<Input
-						id="edit-url"
+						id="edit-url-dialog"
 						type="url"
 						placeholder="https://example.com"
 						autocomplete="off"
 						bind:value={newUrl}
 					/>
+				</div>
+				<div class="grid gap-2">
+					<Label for="edit-tags-dialog">Tags</Label>
+					<div class="flex flex-wrap gap-2 rounded-md border border-input bg-background px-3 py-2">
+						{#each tags as tag (tag)}
+							<span
+								class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
+								style="background-color: {getTagColor(tag)}; color: {getTagTextColor(tag)}"
+							>
+								{tag}
+								<button
+									type="button"
+									class="ml-0.5 inline-flex h-3 w-3 items-center justify-center rounded-full hover:bg-black/10"
+									onclick={() => {
+										tags = tags.filter((t) => t !== tag);
+									}}
+								>
+									<X class="h-2.5 w-2.5" />
+								</button>
+							</span>
+						{/each}
+						<input
+							id="edit-tags-dialog"
+							class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+							placeholder={tags.length === 0 ? 'Add tags (press Enter or Space)' : ''}
+							bind:value={tagInput}
+							onkeydown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									const trimmed = tagInput.trim().toLowerCase();
+									const validTag = trimmed.replace(/[^a-z0-9_\-/]/g, '');
+									if (validTag && !tags.includes(validTag)) {
+										tags = [...tags, validTag];
+									}
+									tagInput = '';
+								} else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
+									tags = tags.slice(0, -1);
+								}
+							}}
+						/>
+					</div>
 				</div>
 				{#if errorMessage}
 					<p class="text-sm text-destructive">{errorMessage}</p>

@@ -18,6 +18,7 @@
 	import { getFavicon, getHostname } from '$lib/utils/url.js';
 	import { formatDate } from '$lib/utils/date.js';
 	import { getErrorMessage } from '$lib/utils/error.js';
+	import { getTagColor, getTagTextColor } from '$lib/utils/tags.js';
 	import { useLink } from '$lib/hooks/useLink.svelte';
 	import { globalState } from '$lib/state/global.svelte';
 	import { accountManager } from '$lib/state/accountManager.svelte';
@@ -30,6 +31,7 @@
 		url: string;
 		shortId: string;
 		_creationTime: number;
+		tags?: string[];
 	}
 
 	interface Props {
@@ -38,6 +40,7 @@
 		isLoading?: boolean;
 		error?: unknown;
 		clicks?: number;
+		tags?: string[];
 		children?: Snippet;
 		trailing?: Snippet<[clicks: number | undefined]>;
 		errorSnippet?: Snippet;
@@ -49,6 +52,7 @@
 		isLoading: providedIsLoading = false,
 		error: providedError,
 		clicks: providedClicks,
+		tags: providedTags = [],
 		children,
 		trailing,
 		errorSnippet
@@ -63,6 +67,7 @@
 	const isLoading = $derived(providedIsLoading || (!!linkState && linkState.isLoading));
 	const error = $derived(providedError ?? linkState?.error ?? null);
 	const clicks = $derived(providedClicks ?? (linkState ? linkState?.link?.clickCount : undefined));
+	const tags = $derived(providedTags ?? link?.tags ?? []);
 
 	let domain = $state('');
 	let protocol = $state('');
@@ -130,7 +135,7 @@
 	<div class="overflow-hidden rounded-xl border bg-card">
 		<div class="flex items-center gap-3 px-3 py-3 text-sm sm:gap-5 sm:px-4 sm:py-5 md:gap-12">
 			<div class="min-w-0 grow">
-				<div class="flex items-center gap-3 sm:h-8">
+				<div class="flex items-center gap-3 sm:h-fit">
 					<div
 						class="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-background sm:flex"
 					>
@@ -169,6 +174,18 @@
 								{formatDate(link._creationTime)}
 							</span>
 						</div>
+						{#if tags.length > 0}
+							<div class="mt-1 flex flex-wrap gap-1.5">
+								{#each tags as tag (tag)}
+									<span
+										class="inline-flex rounded-md px-1.5 py-0.5 text-xs font-medium"
+										style="background-color: {getTagColor(tag)}; color: {getTagTextColor(tag)}"
+									>
+										{tag}
+									</span>
+								{/each}
+							</div>
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -221,6 +238,7 @@
 	bind:open={editDialogOpen}
 	{shortId}
 	currentUrl={link?.url ?? ''}
+	currentTags={tags}
 	onSuccess={handleLinkUpdated}
 />
 <DeleteLinkDialog
