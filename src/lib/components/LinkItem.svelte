@@ -11,7 +11,8 @@
 		Sparkles,
 		ExternalLink,
 		Pencil,
-		Trash2
+		Trash2,
+		QrCode
 	} from '@lucide/svelte';
 	import CopyButton from '$lib/components/ui/copy-button.svelte';
 	import { getFavicon, getHostname } from '$lib/utils/url.js';
@@ -23,6 +24,7 @@
 	import DeleteLinkDialog from './LinkItem/DeleteLinkDialog.svelte';
 	import EditLinkDialog from './LinkItem/EditLinkDialog.svelte';
 	import MoveLinkDialog from './LinkItem/MoveLinkDialog.svelte';
+	import QRCodeDialog from './LinkItem/QRCodeDialog.svelte';
 
 	interface LinkData {
 		url: string;
@@ -78,6 +80,7 @@
 	let editDialogOpen = $state(false);
 	let deleteDialogOpen = $state(false);
 	let moveDialogOpen = $state(false);
+	let qrDialogOpen = $state(false);
 
 	const handleLinkDeleted = () => {
 		deleteDialogOpen = false;
@@ -173,6 +176,14 @@
 				{#if trailing}
 					{@render trailing(clicks)}
 				{/if}
+				<Button
+					variant="outline"
+					size="icon-sm"
+					class="hidden sm:flex"
+					onclick={() => (qrDialogOpen = true)}
+				>
+					<QrCode class="h-4 w-4" />
+				</Button>
 				<DropdownMenu.Root>
 					<DropdownMenu.Trigger>
 						<Button variant="ghost" size="icon-sm">
@@ -180,6 +191,10 @@
 						</Button>
 					</DropdownMenu.Trigger>
 					<DropdownMenu.Content class="w-32">
+						<DropdownMenu.Item onclick={() => (qrDialogOpen = true)} class="sm:hidden">
+							<QrCode class="mr-2 h-4 w-4" />
+							QR Code
+						</DropdownMenu.Item>
 						<DropdownMenu.Item onclick={() => (editDialogOpen = true)}>
 							<Pencil class="mr-2 h-4 w-4" />
 							Edit
@@ -220,3 +235,4 @@
 	url={link?.url ?? ''}
 	onSuccess={() => (moveDialogOpen = false)}
 />
+<QRCodeDialog bind:open={qrDialogOpen} {shortId} {shortUrl} />
