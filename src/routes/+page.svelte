@@ -26,6 +26,7 @@
 	let search = $state('');
 	const debounced = new Debounced(() => search, 300);
 	let orderBy = $state<'newest' | 'oldest' | 'most_clicks' | 'least_clicks'>('newest');
+	let showArchived = $state(false);
 	let currentPage = $state(1);
 	let selectedTag = $state<string | undefined>(undefined);
 	const limit = 10;
@@ -44,6 +45,7 @@
 			...account.authArgs,
 			search: debounced.current || undefined,
 			tag: selectedTag,
+			includeArchived: showArchived,
 			orderBy,
 			limit,
 			skip: (currentPage - 1) * limit
@@ -60,7 +62,8 @@
 	const links = $derived(
 		(linksResult.data?.links ?? []).map((link) => ({
 			shortId: link.shortId,
-			tags: link.tags ?? []
+			tags: link.tags ?? [],
+			archived: link.archived ?? false
 		}))
 	);
 
@@ -109,7 +112,7 @@
 					{/each}
 				</Select.Content>
 			</Select.Root>
-			<DisplayOptions bind:orderBy />
+			<DisplayOptions bind:orderBy bind:showArchived />
 		</div>
 
 		<div class="flex items-center gap-2">
@@ -139,7 +142,7 @@
 						{/each}
 					</Select.Content>
 				</Select.Root>
-				<DisplayOptions bind:orderBy />
+				<DisplayOptions bind:orderBy bind:showArchived />
 			</div>
 		</div>
 	</div>
@@ -155,8 +158,8 @@
 	{:else}
 		<!-- Links List -->
 		<div class="flex flex-col gap-3">
-			{#each links as { shortId, tags } (shortId)}
-				<LinkItem {shortId} {tags}>
+			{#each links as { shortId, tags, archived } (shortId)}
+				<LinkItem {shortId} {tags} {archived}>
 					{#snippet trailing(clicks)}
 						<div class="flex min-w-0 shrink-0 items-center gap-2 overflow-hidden">
 							{#if clicks !== undefined}

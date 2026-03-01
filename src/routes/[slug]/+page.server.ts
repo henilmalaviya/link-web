@@ -12,6 +12,10 @@ export const load: ServerLoad = async ({ params, request, getClientAddress }) =>
 		throw error(404, 'Not found');
 	}
 
+	if (link.archived === true) {
+		throw error(410, 'Gone');
+	}
+
 	const rawIp = getClientAddress();
 	const userAgent = request.headers.get('user-agent') ?? undefined;
 

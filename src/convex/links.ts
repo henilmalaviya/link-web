@@ -132,6 +132,7 @@ export const listShortIdsByUser = protectedAccountQuery({
 	args: {
 		search: v.optional(v.string()),
 		tag: v.optional(v.string()),
+		includeArchived: v.optional(v.boolean()),
 		orderBy: v.optional(
 			v.union(
 				v.literal('newest'),
@@ -147,6 +148,7 @@ export const listShortIdsByUser = protectedAccountQuery({
 	handler: async (ctx, args) => {
 		const search = args.search?.toLowerCase();
 		const tag = args.tag;
+		const includeArchived = args.includeArchived ?? false;
 		const orderBy = args.orderBy ?? 'newest';
 		const limit = args.limit ?? 10;
 		const skip = args.skip ?? 0;
@@ -165,6 +167,10 @@ export const listShortIdsByUser = protectedAccountQuery({
 		}
 
 		let links = await query.collect();
+
+		if (!includeArchived) {
+			links = links.filter((link) => link.archived !== true);
+		}
 
 		if (search) {
 			links = links.filter(
@@ -205,7 +211,8 @@ export const listShortIdsByUser = protectedAccountQuery({
 			links: paginatedLinks.map((link) => ({
 				shortId: link.shortId,
 				clickCount: link.clickCount,
-				tags: link.tags ?? []
+				tags: link.tags ?? [],
+				archived: link.archived ?? false
 			})),
 			total
 		};
@@ -306,6 +313,22 @@ export const moveLink = protectedShortIdMutation({
 			ownerId: targetAccount._id
 		});
 
+		return { ok: true };
+	}
+});
+
+export const archiveLink = protectedShortIdMutation({
+	args: {},
+	handler: async (ctx) => {
+		await ctx.db.patch(ctx.link._id, { archived: true });
+		return { ok: true };
+	}
+});
+
+export const unarchiveLink = protectedShortIdMutation({
+	args: {},
+	handler: async (ctx) => {
+		await ctx.db.patch(ctx.link._id, { archived: false });
 		return { ok: true };
 	}
 });

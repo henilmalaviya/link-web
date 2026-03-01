@@ -11,15 +11,16 @@
 		DrawerTrigger
 	} from '$lib/components/ui/drawer/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { ArrowUpDown, ArrowDown, ArrowUp, BarChart3, Clock } from '@lucide/svelte';
+	import { ArrowUpDown, ArrowDown, ArrowUp, BarChart3, Clock, Archive } from '@lucide/svelte';
 	import * as Select from '$lib/components/ui/select';
 	import { LayoutGrid } from '@lucide/svelte';
 
 	interface Props {
 		orderBy: 'newest' | 'oldest' | 'most_clicks' | 'least_clicks' | 'latest_click';
+		showArchived: boolean;
 	}
 
-	let { orderBy = $bindable() }: Props = $props();
+	let { orderBy = $bindable(), showArchived = $bindable() }: Props = $props();
 
 	const isMobile = new MediaQuery('(max-width: 640px)');
 	const useDrawer = $derived(isMobile.current);
@@ -92,6 +93,29 @@
 						</Select.Content>
 					</Select.Root>
 				</div>
+				<div class="mt-4 flex items-center justify-between">
+					<label for="show-archived" class="flex cursor-pointer items-center gap-2 text-sm">
+						<Archive class="h-4 w-4" />
+						Show archived
+					</label>
+					<button
+						type="button"
+						id="show-archived"
+						role="switch"
+						aria-checked={showArchived}
+						aria-label="Show archived links"
+						onclick={() => (showArchived = !showArchived)}
+						class="relative h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 {showArchived
+							? 'bg-primary'
+							: 'bg-muted'}"
+					>
+						<span
+							class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform {showArchived
+								? 'translate-x-4'
+								: 'translate-x-0'}"
+						></span>
+					</button>
+				</div>
 			</div>
 		</DrawerContent>
 	</Drawer>
@@ -146,6 +170,29 @@
 						</Select.Item>
 					</Select.Content>
 				</Select.Root>
+			</div>
+			<div class="mt-4 flex items-center justify-between">
+				<label for="show-archived-desktop" class="flex cursor-pointer items-center gap-2 text-sm">
+					<Archive class="h-4 w-4" />
+					Show archived
+				</label>
+				<button
+					type="button"
+					id="show-archived-desktop"
+					role="switch"
+					aria-checked={showArchived}
+					aria-label="Show archived links"
+					onclick={() => (showArchived = !showArchived)}
+					class="relative h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 {showArchived
+						? 'bg-primary'
+						: 'bg-muted'}"
+				>
+					<span
+						class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform {showArchived
+							? 'translate-x-4'
+							: 'translate-x-0'}"
+					></span>
+				</button>
 			</div>
 		</Popover.Content>
 	</Popover.Root>

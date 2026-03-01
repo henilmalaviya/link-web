@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, type Snippet } from 'svelte';
-	import { useQuery } from 'convex-svelte';
+	import { useQuery, useConvexClient } from 'convex-svelte';
 	import { api } from '$convex/_generated/api';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
@@ -12,7 +12,9 @@
 		ExternalLink,
 		Pencil,
 		Trash2,
-		QrCode
+		QrCode,
+		Archive,
+		ArchiveRestore
 	} from '@lucide/svelte';
 	import CopyButton from '$lib/components/ui/copy-button.svelte';
 	import { getFavicon, getHostname } from '$lib/utils/url.js';
@@ -32,6 +34,7 @@
 		shortId: string;
 		_creationTime: number;
 		tags?: string[];
+		archived?: boolean;
 	}
 
 	interface Props {
@@ -41,6 +44,7 @@
 		error?: unknown;
 		clicks?: number;
 		tags?: string[];
+		archived?: boolean;
 		children?: Snippet;
 		trailing?: Snippet<[clicks: number | undefined]>;
 		errorSnippet?: Snippet;
@@ -53,6 +57,7 @@
 		error: providedError,
 		clicks: providedClicks,
 		tags: providedTags = [],
+		archived: providedArchived = false,
 		children,
 		trailing,
 		errorSnippet
@@ -68,6 +73,21 @@
 	const error = $derived(providedError ?? linkState?.error ?? null);
 	const clicks = $derived(providedClicks ?? (linkState ? linkState?.link?.clickCount : undefined));
 	const tags = $derived(providedTags ?? link?.tags ?? []);
+	const archived = $derived(providedArchived ?? link?.archived ?? false);
+
+	const convex = useConvexClient();
+
+	const handleArchive = async () => {
+		const auth = accountManager.authArgs;
+		if (!auth) return;
+		await convex.mutation(api.links.archiveLink, { shortId, ...auth });
+	};
+
+	const handleUnarchive = async () => {
+		const auth = accountManager.authArgs;
+		if (!auth) return;
+		await convex.mutation(api.links.unarchiveLink, { shortId, ...auth });
+	};
 
 	let domain = $state('');
 	let protocol = $state('');
@@ -174,8 +194,16 @@
 								{formatDate(link._creationTime)}
 							</span>
 						</div>
-						{#if tags.length > 0}
-							<div class="mt-1 flex flex-wrap gap-1.5">
+						{#if tags.length > 0 || archived}
+							<div class="mt-1 flex flex-wrap items-center gap-1.5">
+								{#if archived}
+									<span
+										class="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground"
+									>
+										<Archive class="h-3 w-3" />
+										Archived
+									</span>
+								{/if}
 								{#each tags as tag (tag)}
 									<span
 										class="inline-flex rounded-md px-1.5 py-0.5 text-xs font-medium"
@@ -220,6 +248,17 @@
 							<CornerDownRight class="mr-2 h-4 w-4" />
 							Move to...
 						</DropdownMenu.Item>
+						{#if archived}
+							<DropdownMenu.Item onclick={handleUnarchive}>
+								<ArchiveRestore class="mr-2 h-4 w-4" />
+								Unarchive
+							</DropdownMenu.Item>
+						{:else}
+							<DropdownMenu.Item onclick={handleArchive}>
+								<Archive class="mr-2 h-4 w-4" />
+								Archive
+							</DropdownMenu.Item>
+						{/if}
 						<DropdownMenu.Item
 							onclick={() => (deleteDialogOpen = true)}
 							class="text-destructive focus:text-destructive"
