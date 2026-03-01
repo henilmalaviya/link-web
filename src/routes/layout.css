@@ -117,6 +117,12 @@
 @layer base {
 	* {
 		@apply border-border outline-ring/50;
+		box-sizing: border-box;
+	}
+	*,
+	*::before,
+	*::after {
+		box-sizing: inherit;
 	}
 	body {
 		@apply bg-background text-foreground;

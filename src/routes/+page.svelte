@@ -105,7 +105,7 @@
 			{#each links as shortId (shortId)}
 				<LinkItem {shortId}>
 					{#snippet trailing(clicks)}
-						<div class="flex shrink-0 items-center gap-2">
+						<div class="flex min-w-0 shrink-0 items-center gap-2 overflow-hidden">
 							{#if clicks !== undefined}
 								<a
 									href={`/analytics?shortId=${shortId}`}
@@ -115,7 +115,8 @@
 										: ''}"
 								>
 									<MousePointerClick class="h-3.5 w-3.5" />
-									<span>{clicks} clicks</span>
+									<span class="sm:hidden">{clicks}</span>
+									<span class="hidden sm:inline">{clicks} clicks</span>
 								</a>
 							{/if}
 						</div>
@@ -141,7 +142,7 @@
 		<!-- Pagination -->
 		{#if totalLinks > 0}
 			<div
-				class="sticky bottom-0 mt-auto flex flex-col items-center justify-between gap-4 border-t bg-background/80 px-3 py-4 text-sm backdrop-blur-md sm:flex-row sm:px-6"
+				class="sticky bottom-0 mt-auto flex flex-wrap items-center justify-between gap-4 border-t bg-background/80 px-3 py-4 text-sm backdrop-blur-md sm:flex-nowrap sm:px-6"
 			>
 				<div class="text-muted-foreground">
 					Page {currentPage} of {totalPages} | Showing {showingFrom}-{showingTo} of {totalLinks} links

@@ -95,8 +95,8 @@
 	<div class="rounded-xl border bg-card">
 		<div class="flex items-center gap-3 px-3 py-3 text-sm sm:gap-5 sm:px-4 sm:py-5 md:gap-12">
 			<div class="min-w-0 grow">
-				<div class="flex items-center gap-3 sm:h-8">
-					<Skeleton class="h-9 w-9 shrink-0 rounded-full" />
+				<div class="items-center gap-3 sm:flex sm:h-8">
+					<Skeleton class="hidden h-9 w-9 shrink-0 rounded-full sm:block" />
 					<div class="min-w-0">
 						<Skeleton class="h-4 w-28 sm:w-36" />
 						<Skeleton class="mt-2 h-3 w-40 sm:w-64" />
@@ -127,12 +127,12 @@
 		</div>
 	{/if}
 {:else if link}
-	<div class="rounded-xl border bg-card">
+	<div class="overflow-hidden rounded-xl border bg-card">
 		<div class="flex items-center gap-3 px-3 py-3 text-sm sm:gap-5 sm:px-4 sm:py-5 md:gap-12">
 			<div class="min-w-0 grow">
 				<div class="flex items-center gap-3 sm:h-8">
 					<div
-						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-background"
+						class="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-background sm:flex"
 					>
 						<img src={getFavicon(link.url)} alt="" class="h-5 w-5" />
 					</div>
@@ -164,8 +164,8 @@
 							>
 								{getHostname(link.url)}
 							</a>
-							<span class="text-neutral-400">•</span>
-							<span class="shrink-0 text-neutral-400">
+							<span class="hidden text-neutral-400 sm:flex">•</span>
+							<span class="hidden shrink-0 text-neutral-400 sm:block">
 								{formatDate(link._creationTime)}
 							</span>
 						</div>
