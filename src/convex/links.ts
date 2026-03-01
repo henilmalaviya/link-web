@@ -133,7 +133,8 @@ export const listShortIdsByUser = protectedAccountQuery({
 				v.literal('newest'),
 				v.literal('oldest'),
 				v.literal('most_clicks'),
-				v.literal('least_clicks')
+				v.literal('least_clicks'),
+				v.literal('latest_click')
 			)
 		),
 		limit: v.optional(v.number()),
@@ -147,6 +148,7 @@ export const listShortIdsByUser = protectedAccountQuery({
 
 		const isTimeOrder = orderBy === 'newest' || orderBy === 'oldest';
 		const isClickOrder = orderBy === 'most_clicks' || orderBy === 'least_clicks';
+		const isLatestClickOrder = orderBy === 'latest_click';
 
 		let query = ctx.db
 			.query('links')
@@ -179,6 +181,12 @@ export const listShortIdsByUser = protectedAccountQuery({
 				const countA = a.clickCount ?? 0;
 				const countB = b.clickCount ?? 0;
 				return orderBy === 'most_clicks' ? countB - countA : countA - countB;
+			});
+		} else if (isLatestClickOrder) {
+			links.sort((a, b) => {
+				const timeA = a.lastClickTime ?? 0;
+				const timeB = b.lastClickTime ?? 0;
+				return timeB - timeA;
 			});
 		}
 

@@ -10,7 +10,8 @@ export const linkSchema = {
 	url: v.string(),
 	shortId: v.string(),
 	clickCount: v.number(),
-	ownerId: v.id('accounts')
+	ownerId: v.id('accounts'),
+	lastClickTime: v.optional(v.number())
 };
 
 export const redirectSchema = {

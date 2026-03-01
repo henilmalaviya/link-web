@@ -22,7 +22,8 @@ export const incrementClickCount = internalMutation({
 			return;
 		}
 		await ctx.db.patch(link._id, {
-			clickCount: (link.clickCount ?? 0) + 1
+			clickCount: (link.clickCount ?? 0) + 1,
+			lastClickTime: Date.now()
 		});
 	}
 });

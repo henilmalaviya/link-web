@@ -11,12 +11,12 @@
 		DrawerTrigger
 	} from '$lib/components/ui/drawer/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { ArrowUpDown, ArrowDown, ArrowUp, BarChart3 } from '@lucide/svelte';
+	import { ArrowUpDown, ArrowDown, ArrowUp, BarChart3, Clock } from '@lucide/svelte';
 	import * as Select from '$lib/components/ui/select';
 	import { LayoutGrid } from '@lucide/svelte';
 
 	interface Props {
-		orderBy: 'newest' | 'oldest' | 'most_clicks' | 'least_clicks';
+		orderBy: 'newest' | 'oldest' | 'most_clicks' | 'least_clicks' | 'latest_click';
 	}
 
 	let { orderBy = $bindable() }: Props = $props();
@@ -63,7 +63,9 @@
 										? 'Oldest first'
 										: orderBy === 'most_clicks'
 											? 'Most clicks'
-											: 'Least clicks'}</span
+											: orderBy === 'least_clicks'
+												? 'Least clicks'
+												: 'Latest click'}</span
 							>
 						</Select.Trigger>
 						<Select.Content>
@@ -82,6 +84,10 @@
 							<Select.Item value="least_clicks">
 								<ArrowUpDown class="mr-2 inline h-4 w-4" />
 								Least clicks
+							</Select.Item>
+							<Select.Item value="latest_click">
+								<Clock class="mr-2 inline h-4 w-4" />
+								Latest click
 							</Select.Item>
 						</Select.Content>
 					</Select.Root>
@@ -112,7 +118,9 @@
 									? 'Oldest first'
 									: orderBy === 'most_clicks'
 										? 'Most clicks'
-										: 'Least clicks'}</span
+										: orderBy === 'least_clicks'
+											? 'Least clicks'
+											: 'Latest click'}</span
 						>
 					</Select.Trigger>
 					<Select.Content>
@@ -131,6 +139,10 @@
 						<Select.Item value="least_clicks">
 							<ArrowUpDown class="mr-2 inline h-4 w-4" />
 							Least clicks
+						</Select.Item>
+						<Select.Item value="latest_click">
+							<Clock class="mr-2 inline h-4 w-4" />
+							Latest click
 						</Select.Item>
 					</Select.Content>
 				</Select.Root>
