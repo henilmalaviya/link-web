@@ -9,4 +9,6 @@ crons.interval(
 	internal.redirects.processPendingRedirects
 );
 
+crons.interval('sync click data', { hours: 24 }, internal.redirects.syncClickData);
+
 export default crons;

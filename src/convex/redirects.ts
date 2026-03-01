@@ -173,6 +173,30 @@ export const processPendingRedirects = internalAction({
 	}
 });
 
+export const syncClickData = internalMutation({
+	args: {},
+	handler: async (ctx) => {
+		const links = await ctx.db.query('links').collect();
+
+		for (const link of links) {
+			const redirects = await ctx.db
+				.query('redirects')
+				.withIndex('byShortId', (q) => q.eq('shortId', link.shortId))
+				.collect();
+
+			const clickCount = redirects.length;
+			const lastClickTime =
+				redirects.length > 0 ? Math.max(...redirects.map((r) => r._creationTime)) : undefined;
+			if (clickCount !== link.clickCount || lastClickTime !== link.lastClickTime) {
+				await ctx.db.patch(link._id, {
+					clickCount,
+					lastClickTime
+				});
+			}
+		}
+	}
+});
+
 /* -------------------------------------------------------------------------- */
 // PUBLIC FUNCTIONS
 
