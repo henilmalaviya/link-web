@@ -20,6 +20,9 @@
 
 	const linkState = useLink(() => shortId);
 
+	const archived = $derived(linkState.link?.archived ?? false);
+	const tags = $derived(linkState.link?.tags ?? []);
+
 	const errorCode = $derived(
 		linkState.error ? (linkState.error as { data?: { code?: string } }).data?.code : ''
 	);
@@ -100,7 +103,7 @@
 					</Select.Root>
 				</div>
 			</div>
-			<LinkItem {shortId} link={linkState.link} isLoading={linkState.isLoading} />
+			<LinkItem {shortId} link={linkState.link} {archived} {tags} isLoading={linkState.isLoading} />
 		</div>
 	</div>
 	{#if linkState.error}
