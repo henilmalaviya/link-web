@@ -12,6 +12,7 @@
 	import Navbar from '$lib/components/Navbar.svelte';
 	import AccountSwitcher from '$lib/components/AccountSwitcher.svelte';
 	import { Toaster } from '$lib/components/ui/sonner';
+	import Footer from '$lib/components/Footer.svelte';
 	import { page } from '$app/state';
 
 	setupConvex(PUBLIC_CONVEX_URL);
@@ -75,6 +76,10 @@
 		{@render children()}
 	{/if}
 </div>
+
+{#if page.status !== 404 && page.status !== 410}
+	<Footer />
+{/if}
 
 <AccountSwitcher bind:open={userSwitcherOpen} />
 
