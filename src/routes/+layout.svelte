@@ -13,6 +13,7 @@
 	import AccountSwitcher from '$lib/components/AccountSwitcher.svelte';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import Footer from '$lib/components/Footer.svelte';
+	import WelcomeDialog from '$lib/components/WelcomeDialog.svelte';
 	import { page } from '$app/state';
 
 	setupConvex(PUBLIC_CONVEX_URL);
@@ -82,5 +83,9 @@
 {/if}
 
 <AccountSwitcher bind:open={userSwitcherOpen} />
+
+{#if page.url.pathname === '/'}
+	<WelcomeDialog />
+{/if}
 
 <Toaster />
