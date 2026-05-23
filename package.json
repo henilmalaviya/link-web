@@ -48,7 +48,8 @@
 	"dependencies": {
 		"@convex-dev/workpool": "^0.4.0",
 		"@fontsource-variable/nunito-sans": "^5.2.7",
-		"convex": "^1.31.7",
+		"@openrouter/sdk": "^0.12.35",
+		"convex": "^1.39.1",
 		"convex-helpers": "^0.1.112",
 		"convex-svelte": "^0.0.12",
 		"iso-3166-1": "^2.1.1",

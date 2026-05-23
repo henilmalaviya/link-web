@@ -9,6 +9,8 @@
  */
 
 import type * as accounts from "../accounts.js";
+import type * as ai from "../ai.js";
+import type * as ai_helpers from "../ai_helpers.js";
 import type * as analytics from "../analytics.js";
 import type * as crons from "../crons.js";
 import type * as crypto from "../crypto.js";
@@ -25,6 +27,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   accounts: typeof accounts;
+  ai: typeof ai;
+  ai_helpers: typeof ai_helpers;
   analytics: typeof analytics;
   crons: typeof crons;
   crypto: typeof crypto;
