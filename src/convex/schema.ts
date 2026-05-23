@@ -47,10 +47,25 @@ export const redirectSchema = {
 	})
 };
 
+export const pageCacheSchema = {
+	url: v.string(),
+	title: v.optional(v.string()),
+	description: v.optional(v.string()),
+	fetchedAt: v.number()
+};
+
+export const aiRateLimitSchema = {
+	accountId: v.id('accounts'),
+	count: v.number(),
+	windowStart: v.number()
+};
+
 export default defineSchema({
 	accounts: defineTable(accountSchema).index('byUsername', ['username']),
 	links: defineTable(linkSchema).index('byShortId', ['shortId']).index('byOwnerId', ['ownerId']),
 	redirects: defineTable(redirectSchema)
 		.index('byShortId', ['shortId'])
-		.index('byGeolocationStatus', ['meta.status.geolocation'])
+		.index('byGeolocationStatus', ['meta.status.geolocation']),
+	pageCache: defineTable(pageCacheSchema).index('byUrl', ['url']),
+	aiRateLimits: defineTable(aiRateLimitSchema).index('byAccountId', ['accountId'])
 });
