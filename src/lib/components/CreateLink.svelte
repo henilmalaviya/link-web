@@ -166,7 +166,6 @@
 				...auth,
 				url: trimmedUrl
 			})) as { suggestions: string[]; disabled?: boolean; rateLimited?: boolean };
-			console.log('AI suggestions result', result);
 			if (result.disabled) {
 				aiError = 'AI Suggestions are disabled as of now';
 				return;
