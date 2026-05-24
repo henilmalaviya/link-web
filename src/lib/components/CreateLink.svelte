@@ -165,9 +165,13 @@
 			const result = (await convex.action(api.ai.suggestSlugs, {
 				...auth,
 				url: trimmedUrl
-			})) as { suggestions: string[]; disabled?: boolean };
+			})) as { suggestions: string[]; disabled?: boolean; rateLimited?: boolean };
 			if (result.disabled) {
 				aiError = 'AI Suggestions are disabled as of now';
+				return;
+			}
+			if (result.rateLimited) {
+				aiError = 'Rate limited. Please try again later.';
 				return;
 			}
 			aiSuggestions = result.suggestions ?? [];

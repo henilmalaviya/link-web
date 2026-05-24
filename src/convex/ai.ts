@@ -209,7 +209,7 @@ export const suggestSlugs = action({
 			return { suggestions: available.slice(0, suggestionCount) };
 		} catch (e) {
 			console.log(`[AI] suggestSlugs: unexpected error for ${url}`, e);
-			return { suggestions: [] };
-		}
+				return { suggestions: [], rateLimited: true };
+			}
 	}
 });
