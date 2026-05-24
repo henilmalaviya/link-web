@@ -118,27 +118,28 @@ export const suggestSlugs = action({
 				return { suggestions: [], disabled: true };
 			}
 
-			const suggestionCount = Math.min(Math.max(parseInt(env.AI_SUGGESTION_COUNT ?? '3', 10) || 3, 1), 10);
+			const suggestionCount = Math.min(
+				Math.max(parseInt(env.AI_SUGGESTION_COUNT ?? '3', 10) || 3, 1),
+				10
+			);
 			const rateLimit = Math.max(parseInt(env.AI_RATE_LIMIT ?? '10', 10) || 10, 1);
 			const rateWindowMs = Math.max(parseInt(env.AI_RATE_WINDOW_MS ?? '3600000', 10) || 3600000, 1);
 
-			const accountId = (await ctx.runQuery(
-				internal.ai_helpers.authorizeAccountForAction,
-				{
-					username,
-					token
-				}
-			)) as Id<'accounts'>;
+			const accountId = (await ctx.runQuery(internal.ai_helpers.authorizeAccountForAction, {
+				username,
+				token
+			})) as Id<'accounts'>;
 
-			const rateDoc = (await ctx.runQuery(
-				internal.ai_helpers.getAccountSuggestionRate,
-				{
-					accountId
-				}
-			)) as { count: number; windowStart: number } | null;
-			if (rateDoc && Date.now() - rateDoc.windowStart < rateWindowMs && rateDoc.count >= rateLimit) {
+			const rateDoc = (await ctx.runQuery(internal.ai_helpers.getAccountSuggestionRate, {
+				accountId
+			})) as { count: number; windowStart: number } | null;
+			if (
+				rateDoc &&
+				Date.now() - rateDoc.windowStart < rateWindowMs &&
+				rateDoc.count >= rateLimit
+			) {
 				console.log(`[AI] suggestSlugs: rate limited for account ${accountId}`);
-				return { suggestions: [] };
+				return { suggestions: [], rateLimited: true };
 			}
 
 			let pageInfo = (await ctx.runQuery(internal.ai_helpers.getCachedPageInfo, {
@@ -154,7 +155,12 @@ export const suggestSlugs = action({
 				});
 			}
 
-			const { system, user } = buildPrompt(pageInfo.title, pageInfo.description, url, suggestionCount);
+			const { system, user } = buildPrompt(
+				pageInfo.title,
+				pageInfo.description,
+				url,
+				suggestionCount
+			);
 
 			const client = new OpenRouter({
 				apiKey: env.OPENROUTER_API_KEY!
@@ -209,7 +215,7 @@ export const suggestSlugs = action({
 			return { suggestions: available.slice(0, suggestionCount) };
 		} catch (e) {
 			console.log(`[AI] suggestSlugs: unexpected error for ${url}`, e);
-				return { suggestions: [], rateLimited: true };
-			}
+			return { suggestions: [] };
+		}
 	}
 });
